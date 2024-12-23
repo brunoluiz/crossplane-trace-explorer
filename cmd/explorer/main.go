@@ -34,6 +34,7 @@ func main() {
 func addNodes(v *xplane.Resource, n *tree.Node) {
 	n.Value = fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
 	n.Children = make([]tree.Node, len(v.Children))
+	n.Desc = fmt.Sprintf("%30s%30s", v.Unstructured.GetAPIVersion(), v.Error)
 
 	for k, cv := range v.Children {
 		addNodes(cv, &n.Children[k])

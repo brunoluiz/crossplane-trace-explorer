@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/truncate"
 )
 
 const (
@@ -191,9 +192,9 @@ func (m *Model) renderTree(remainingNodes []Node, path []string, indent int, cou
 		var str string
 
 		// If we aren't at the root, we add the arrow shape to the string
+		shape := ""
 		if indent > 0 {
-			shape := strings.Repeat(" ", (indent-1)*2) + m.Styles.Shapes.Render(bottomLeft) + " "
-			str += shape
+			shape = strings.Repeat(" ", (indent-1)) + m.Styles.Shapes.Render(bottomLeft) + " "
 		}
 
 		// Generate the correct index for the node
@@ -201,17 +202,17 @@ func (m *Model) renderTree(remainingNodes []Node, path []string, indent int, cou
 		*count++
 
 		// Format the string with fixed width for the value and description fields
-		valueWidth := 10
-		descWidth := 20
-		valueStr := fmt.Sprintf("%-*s", valueWidth, node.Value)
-		descStr := fmt.Sprintf("%-*s", descWidth, node.Desc)
+		valueStr := fmt.Sprintf("%-*s", 60, node.Value)
 
 		// If we are at the cursor, we add the selected style to the string
 		if m.cursor == idx {
-			str += fmt.Sprintf("%s\t\t%s\n", m.Styles.Selected.Render(valueStr), descStr)
+			valueStr = m.Styles.Selected.Render(valueStr)
 		} else {
-			str += fmt.Sprintf("%s\t\t%s\n", m.Styles.Unselected.Render(valueStr), descStr)
+			valueStr = m.Styles.Unselected.Render(valueStr)
 		}
+
+		f := fmt.Sprintf("%s%s", shape, valueStr)
+		str += fmt.Sprintf("%s%s\n", truncate.String(f, 60), node.Desc)
 
 		b.WriteString(str)
 		m.nodesByCursor[idx] = &node
