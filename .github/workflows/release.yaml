@@ -36,6 +36,7 @@ jobs:
       all: ${{ toJSON(steps.release-please.outputs) }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release-please
         with:
           release-type: go
 
