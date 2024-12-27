@@ -44,6 +44,7 @@ type Model struct {
 	Styles                  Styles
 	AdditionalShortHelpKeys func() []key.Binding
 	Help                    help.Model
+	OnSelectionChange       func(node *Node)
 
 	width         int
 	height        int
@@ -132,8 +133,16 @@ func (m *Model) SetShowHelp() bool {
 	return m.showHelp
 }
 
+func (m *Model) onSelectionChange(node *Node) {
+	if m.OnSelectionChange == nil {
+		return
+	}
+	m.OnSelectionChange(node)
+}
+
 func (m *Model) NavUp() {
 	m.cursor--
+	m.onSelectionChange(m.nodesByCursor[m.cursor])
 
 	if m.cursor < 0 {
 		m.cursor = 0
@@ -143,6 +152,7 @@ func (m *Model) NavUp() {
 
 func (m *Model) NavDown() {
 	m.cursor++
+	m.onSelectionChange(m.nodesByCursor[m.cursor])
 
 	if m.cursor >= m.NumberOfNodes() {
 		m.cursor = m.NumberOfNodes() - 1
@@ -205,6 +215,11 @@ func (m Model) View() string {
 	if len(nodes) == 0 {
 		return "No data"
 	}
+
+	// details := lipgloss.NewStyle().
+	// 	Background(lipgloss.Color("63")).
+	// 	Width(m.width)
+
 	return lipgloss.JoinVertical(lipgloss.Left, lipgloss.NewStyle().Height(availableHeight).Render(t.Render()), help)
 }
 

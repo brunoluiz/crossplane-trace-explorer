@@ -119,7 +119,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	m.tree, cmd = m.tree.Update(msg)
-	m.statusbar.SetContent(statusRoot, strings.Join(m.tree.Path(), " > "), "", statusOp)
+	m.statusbar.SetContent(statusRoot, strings.Join(m.tree.Path(), "\ueab6 "), "", statusOp)
 	m.statusbar.FourthColumnColors = statusOpColor
 
 	return m, cmd
