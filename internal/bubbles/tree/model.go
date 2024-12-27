@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/truncate"
+	"github.com/charmbracelet/lipgloss/table"
 	"github.com/samber/lo"
 )
 
@@ -19,8 +19,8 @@ const (
 )
 
 type State struct {
-	Status    string
-	UpdatedAt time.Time
+	Status             string
+	LastTransitionTime time.Time
 }
 
 type Node struct {
@@ -177,8 +177,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) View() string {
 	availableHeight := m.height
-	var sections []string
-
 	nodes := m.Nodes()
 
 	var help string
@@ -187,21 +185,26 @@ func (m Model) View() string {
 		availableHeight -= lipgloss.Height(help)
 	}
 
+	t := table.New().
+		Border(lipgloss.HiddenBorder()).
+		BorderTop(false).
+		BorderHeader(true).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			return lipgloss.NewStyle().PaddingRight(2)
+		}).
+		Headers("OBJECT", "SYNCED", "SYNC LAST UPDATE", "READY", "READY LAST UPDATE", "MESSAGE")
+
 	count := 0 // This is used to keep track of the index of the node we are on (important because we are using a recursive function)
-	sections = append(sections, lipgloss.NewStyle().Height(availableHeight).Render(m.renderTree(m.nodes, []string{}, 0, &count)), help)
+	m.renderTree(t, m.nodes, []string{}, 0, &count)
 
 	if len(nodes) == 0 {
 		return "No data"
 	}
-	return lipgloss.JoinVertical(lipgloss.Left, sections...)
+	return lipgloss.JoinVertical(lipgloss.Left, lipgloss.NewStyle().Height(availableHeight).Render(t.Render()), help)
 }
 
-func (m *Model) renderTree(remainingNodes []Node, path []string, indent int, count *int) string {
-	var b strings.Builder
-
+func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string, indent int, count *int) {
 	for _, node := range remainingNodes {
-		var str string
-
 		// If we aren't at the root, we add the arrow shape to the string
 		shape := ""
 		if indent > 0 {
@@ -222,25 +225,21 @@ func (m *Model) renderTree(remainingNodes []Node, path []string, indent int, cou
 			valueStr = m.Styles.Unselected.Render(node.Object)
 		}
 
-		f := fmt.Sprintf("%s%-*s", shape, 100, valueStr)
+		obj := fmt.Sprintf("%s%s", shape, valueStr)
+		sync := node.Synced.Status
+		syncAt := node.Synced.LastTransitionTime.Format("02 Jan 06 15:04")
+		rdy := node.Ready.Status
+		rdyAt := node.Ready.LastTransitionTime.Format("02 Jan 06 15:04")
+		msg := lo.Elipse(node.Message, 140)
 
-		r := fmt.Sprintf("%s (%s)", node.Ready.Status, node.Ready.UpdatedAt.Format("02 Jan 06 15:04"))
-		s := fmt.Sprintf("%s (%s)", node.Synced.Status, node.Synced.UpdatedAt.Format("02 Jan 06 15:04"))
-		msg := lo.Elipse(node.Message, 50)
-		desc := fmt.Sprintf("%30s%30s  %-50s", s, r, msg)
-		str += fmt.Sprintf("%s%s\n", truncate.String(f, 60), desc)
-
-		b.WriteString(str)
+		t.Row(obj, sync, syncAt, rdy, rdyAt, msg)
 		m.nodesByCursor[idx] = &node
 		node.path = append(path, node.Object)
 
 		if node.Children != nil {
-			childStr := m.renderTree(node.Children, node.path, indent+1, count)
-			b.WriteString(childStr)
+			m.renderTree(t, node.Children, node.path, indent+1, count)
 		}
 	}
-
-	return b.String()
 }
 
 func (m Model) helpView() string {
@@ -267,6 +266,7 @@ func (m Model) FullHelp() [][]key.Binding {
 	kb := [][]key.Binding{{
 		m.KeyMap.Up,
 		m.KeyMap.Down,
+		m.KeyMap.Yank,
 	}}
 
 	return append(kb,

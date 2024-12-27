@@ -39,12 +39,12 @@ func addNodes(v *xplane.Resource, n *tree.Node) {
 	n.Object = fmt.Sprintf("%s.%s/%s", v.Unstructured.GetKind(), group, v.Unstructured.GetName())
 	n.Children = make([]tree.Node, len(v.Children))
 	n.Ready = tree.State{
-		Status:    string(ready.Status),
-		UpdatedAt: ready.LastTransitionTime.Time,
+		Status:             string(ready.Status),
+		LastTransitionTime: ready.LastTransitionTime.Time,
 	}
 	n.Synced = tree.State{
-		Status:    string(synced.Status),
-		UpdatedAt: synced.LastTransitionTime.Time,
+		Status:             string(synced.Status),
+		LastTransitionTime: synced.LastTransitionTime.Time,
 	}
 	n.Message = strings.Join(v.GetUnhealthyStatus(), ", ")
 
