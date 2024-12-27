@@ -1,8 +1,11 @@
 package xplane
 
 import (
+	"fmt"
+
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
+	k8sv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -27,4 +30,20 @@ func (r *Resource) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 		}
 	}
 	return xpv1.Condition{}
+}
+
+func (r *Resource) GetUnhealthyStatus() []string {
+	ready := r.GetCondition(xpv1.TypeReady)
+	synced := r.GetCondition(xpv1.TypeSynced)
+
+	var s []string
+	if ready.Status != k8sv1.ConditionTrue {
+		s = append(s, fmt.Sprintf("%s", ready.Message))
+	}
+
+	if synced.Status != k8sv1.ConditionTrue {
+		s = append(s, fmt.Sprintf("%s", synced.Message))
+	}
+
+	return s
 }

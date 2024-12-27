@@ -11,6 +11,7 @@ import (
 	"github.com/concordalabs/crossplane-trace-explorer/internal/xplane"
 	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/mistakenelf/teacup/statusbar"
+	"github.com/samber/lo"
 )
 
 var (
@@ -42,7 +43,7 @@ func addNodes(v *xplane.Resource, n *tree.Node) {
 	r := fmt.Sprintf("%s (%s)", ready.Status, ready.LastTransitionTime.Format("02 Jan 06 15:04"))
 	s := fmt.Sprintf("%s (%s)", synced.Status, synced.LastTransitionTime.Format("02 Jan 06 15:04"))
 
-	n.Desc = fmt.Sprintf("%30s%30s%30s", g, s, r)
+	n.Desc = fmt.Sprintf("%30s%30s%30s  %-50s", g, s, r, lo.Elipse(strings.Join(v.GetUnhealthyStatus(), ", "), 50))
 	for k, cv := range v.Children {
 		addNodes(cv, &n.Children[k])
 	}
