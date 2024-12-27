@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/brunoluiz/crossplane-trace-explorer/internal/bubbles/tree"
 	"github.com/brunoluiz/crossplane-trace-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
@@ -58,8 +59,13 @@ func initialModel(data *xplane.Resource) model {
 	}
 	addNodes(data, &nodes[0])
 
+	t := tree.New(nodes, 0, 0)
+	t.OnYank = func(node *tree.Node) {
+		//nolint // nothing can be done in case of error
+		clipboard.WriteAll(node.GetFullName())
+	}
 	return model{
-		tree: tree.New(nodes, 0, 0),
+		tree: t,
 		statusbar: statusbar.New(
 			statusbar.ColorConfig{
 				Foreground: lipgloss.AdaptiveColor{Dark: "#ffffff", Light: "#ffffff"},

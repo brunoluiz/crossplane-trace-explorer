@@ -5,17 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/samber/lo"
-)
-
-const (
-	bottomLeft string = " └──"
 )
 
 type State struct {
@@ -40,11 +35,12 @@ func (n *Node) GetFullName() string {
 }
 
 type Model struct {
-	KeyMap                  KeyMap
-	Styles                  Styles
-	AdditionalShortHelpKeys func() []key.Binding
-	Help                    help.Model
-	OnSelectionChange       func(node *Node)
+	KeyMap KeyMap
+	Styles Styles
+	Help   help.Model
+
+	OnSelectionChange func(node *Node)
+	OnYank            func(node *Node)
 
 	width         int
 	height        int
@@ -61,7 +57,7 @@ func New(
 	height int,
 ) Model {
 	return Model{
-		KeyMap: DefaultKeyMap(),
+		KeyMap: defaultKeyMap(),
 		Styles: defaultStyles(),
 
 		width:         width,
@@ -140,7 +136,14 @@ func (m *Model) onSelectionChange(node *Node) {
 	m.OnSelectionChange(node)
 }
 
-func (m *Model) NavUp() {
+func (m *Model) onYank(node *Node) {
+	if m.OnYank == nil {
+		return
+	}
+	m.OnYank(node)
+}
+
+func (m *Model) onNavUp() {
 	m.cursor--
 	m.onSelectionChange(m.nodesByCursor[m.cursor])
 
@@ -150,7 +153,7 @@ func (m *Model) NavUp() {
 	}
 }
 
-func (m *Model) NavDown() {
+func (m *Model) onNavDown() {
 	m.cursor++
 	m.onSelectionChange(m.nodesByCursor[m.cursor])
 
@@ -158,11 +161,6 @@ func (m *Model) NavDown() {
 		m.cursor = m.NumberOfNodes() - 1
 		return
 	}
-}
-
-func (m *Model) Yank() {
-	//nolint // nothing can be done in case of error
-	clipboard.WriteAll(m.nodesByCursor[m.cursor].GetFullName())
 }
 
 func (m *Model) Path() []string {
@@ -175,11 +173,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.KeyMap.Up):
-			m.NavUp()
+			m.onNavUp()
 		case key.Matches(msg, m.KeyMap.Down):
-			m.NavDown()
+			m.onNavDown()
 		case key.Matches(msg, m.KeyMap.Yank):
-			m.Yank()
+			m.onYank(m.nodesByCursor[m.cursor])
 		case key.Matches(msg, m.KeyMap.ShowFullHelp):
 			fallthrough
 		case key.Matches(msg, m.KeyMap.CloseFullHelp):
@@ -216,19 +214,17 @@ func (m Model) View() string {
 		return "No data"
 	}
 
-	// details := lipgloss.NewStyle().
-	// 	Background(lipgloss.Color("63")).
-	// 	Width(m.width)
-
 	return lipgloss.JoinVertical(lipgloss.Left, lipgloss.NewStyle().Height(availableHeight).Render(t.Render()), help)
 }
 
 func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string, indent int, count *int) {
+	const treeNodePrefix string = " └──"
+
 	for _, node := range remainingNodes {
 		// If we aren't at the root, we add the arrow shape to the string
 		shape := ""
 		if indent > 0 {
-			shape = strings.Repeat(" ", (indent-1)) + m.Styles.Shapes.Render(bottomLeft) + " "
+			shape = strings.Repeat(" ", (indent-1)) + m.Styles.Shapes.Render(treeNodePrefix) + " "
 		}
 
 		// Generate the correct index for the node
@@ -275,10 +271,6 @@ func (m Model) ShortHelp() []key.Binding {
 		m.KeyMap.Up,
 		m.KeyMap.Down,
 		m.KeyMap.Yank,
-	}
-
-	if m.AdditionalShortHelpKeys != nil {
-		kb = append(kb, m.AdditionalShortHelpKeys()...)
 	}
 
 	return append(kb,

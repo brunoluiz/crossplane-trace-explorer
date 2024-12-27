@@ -17,8 +17,8 @@ type KeyMap struct {
 	CloseFullHelp key.Binding
 }
 
-// DefaultKeyMap is the default key bindings for the table.
-func DefaultKeyMap() KeyMap {
+// defaultKeyMap is the default key bindings for the table.
+func defaultKeyMap() KeyMap {
 	return KeyMap{
 		Bottom: key.NewBinding(
 			key.WithKeys("bottom"),
