@@ -19,8 +19,8 @@ const (
 )
 
 type State struct {
-	Status             string
 	LastTransitionTime time.Time
+	Status             string
 }
 
 type Node struct {

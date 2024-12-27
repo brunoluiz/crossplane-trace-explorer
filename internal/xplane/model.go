@@ -33,17 +33,22 @@ func (r *Resource) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 }
 
 func (r *Resource) GetUnhealthyStatus() []string {
-	ready := r.GetCondition(xpv1.TypeReady)
-	synced := r.GetCondition(xpv1.TypeSynced)
+	out := []string{}
 
-	var s []string
-	if ready.Status != k8sv1.ConditionTrue {
-		s = append(s, fmt.Sprintf("%s", ready.Message))
+	addUnhealthy := func(arr *[]string, c xpv1.Condition) {
+		if c.Status == k8sv1.ConditionTrue {
+			return
+		}
+
+		o := ""
+		if c.Reason != "" {
+			o += fmt.Sprintf("%s: ", c.Reason)
+		}
+		o += c.Message
+		*arr = append(*arr, o)
 	}
 
-	if synced.Status != k8sv1.ConditionTrue {
-		s = append(s, fmt.Sprintf("%s", synced.Message))
-	}
-
-	return s
+	addUnhealthy(&out, r.GetCondition(xpv1.TypeReady))
+	addUnhealthy(&out, r.GetCondition(xpv1.TypeSynced))
+	return out
 }
