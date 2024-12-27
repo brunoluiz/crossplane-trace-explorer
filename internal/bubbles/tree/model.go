@@ -34,6 +34,11 @@ type Node struct {
 	path     []string
 }
 
+func (n *Node) GetFullName() string {
+	s := strings.Split(n.Object, "/")
+	return fmt.Sprintf("%s.%s/%s", s[0], n.Group, s[1])
+}
+
 type Model struct {
 	KeyMap KeyMap
 	Styles Styles
@@ -147,8 +152,7 @@ func (m *Model) NavDown() {
 }
 
 func (m *Model) Yank() {
-	// TODO: deal with errors
-	clipboard.WriteAll(m.nodesByCursor[m.cursor].Object)
+	clipboard.WriteAll(m.nodesByCursor[m.cursor].GetFullName())
 }
 
 func (m *Model) Path() []string {
@@ -192,7 +196,7 @@ func (m Model) View() string {
 		StyleFunc(func(row, col int) lipgloss.Style {
 			return lipgloss.NewStyle().PaddingRight(2)
 		}).
-		Headers("OBJECT", "SYNCED", "SYNC LAST UPDATE", "READY", "READY LAST UPDATE", "MESSAGE")
+		Headers("OBJECT", "GROUP", "SYNCED", "SYNC LAST UPDATE", "READY", "READY LAST UPDATE", "MESSAGE")
 
 	count := 0 // This is used to keep track of the index of the node we are on (important because we are using a recursive function)
 	m.renderTree(t, m.nodes, []string{}, 0, &count)
@@ -225,14 +229,15 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string,
 			valueStr = m.Styles.Unselected.Render(node.Object)
 		}
 
-		obj := fmt.Sprintf("%s%s", shape, valueStr)
-		sync := node.Synced.Status
-		syncAt := node.Synced.LastTransitionTime.Format("02 Jan 06 15:04")
-		rdy := node.Ready.Status
-		rdyAt := node.Ready.LastTransitionTime.Format("02 Jan 06 15:04")
-		msg := lo.Elipse(node.Message, 140)
-
-		t.Row(obj, sync, syncAt, rdy, rdyAt, msg)
+		t.Row(
+			fmt.Sprintf("%s%s", shape, valueStr),
+			node.Group,
+			node.Synced.Status,
+			node.Synced.LastTransitionTime.Format("02 Jan 06 15:04"),
+			node.Ready.Status,
+			node.Ready.LastTransitionTime.Format("02 Jan 06 15:04"),
+			lo.Elipse(node.Message, 140),
+		)
 		m.nodesByCursor[idx] = &node
 		node.path = append(path, node.Object)
 

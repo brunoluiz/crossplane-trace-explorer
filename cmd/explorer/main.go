@@ -36,7 +36,8 @@ func addNodes(v *xplane.Resource, n *tree.Node) {
 	ready := v.GetCondition(v1.TypeReady)
 	synced := v.GetCondition(v1.TypeSynced)
 
-	n.Object = fmt.Sprintf("%s.%s/%s", v.Unstructured.GetKind(), group, v.Unstructured.GetName())
+	n.Object = fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
+	n.Group = group
 	n.Children = make([]tree.Node, len(v.Children))
 	n.Ready = tree.State{
 		Status:             string(ready.Status),
