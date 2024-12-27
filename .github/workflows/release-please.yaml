@@ -29,6 +29,11 @@ jobs:
     needs: [build]
     name: Prepare (release-please)
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release-please.outputs.release_created }}
+      tag_name: ${{ steps.release-please.outputs.tag_name }} # e.g. v1.0.0
+      version: ${{ steps.release-please.outputs.version }} # e.g. 1.0.0
+      all: ${{ toJSON(steps.release-please.outputs) }}
     steps:
       - uses: googleapis/release-please-action@v4
         with:
