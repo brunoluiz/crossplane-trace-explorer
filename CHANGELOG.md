@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/brunoluiz/crossplane-trace-explorer/compare/v1.1.2...v1.1.3) (2024-12-27)
+
+
+### Bug Fixes
+
+* **ci:** retrigger workflow ([76379a5](https://github.com/brunoluiz/crossplane-trace-explorer/commit/76379a563240855107fff26ddc2d453d7ee3ecf2))
+
 ## [1.1.2](https://github.com/brunoluiz/crossplane-trace-explorer/compare/v1.1.1...v1.1.2) (2024-12-27)
 
 
