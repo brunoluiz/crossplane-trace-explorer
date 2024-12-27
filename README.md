@@ -51,3 +51,13 @@ You must have `crossplane` installed. Run the tracer with `-o json` and pipe it 
 crossplane beta trace Bucket/test-resource-bucket-hash -o json | crossplane-trace-explorer
 ```
 
+## 🧾 To-do
+
+- Understand how to add a viewport within the explorer to expand leafs
+- Re-do the `addNodes` feature
+- Use a map instead of slice on the `tree#Node.details` (have to be careful around ordering)
+- Add comments to functions
+- Review hooks x Elm Bubble model
+- Allow short and wide table format
+- Understand why first render of statusbar is not rendering selected path without hack
+- Add support to logging through TUI debug mode to file
