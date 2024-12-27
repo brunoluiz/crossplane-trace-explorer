@@ -9,8 +9,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/concordalabs/crossplane-trace-explorer/internal/bubbles/tree"
 	"github.com/concordalabs/crossplane-trace-explorer/internal/xplane"
+	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/mistakenelf/teacup/statusbar"
-	"golang.org/x/term"
 )
 
 var (
@@ -34,8 +34,15 @@ func main() {
 func addNodes(v *xplane.Resource, n *tree.Node) {
 	n.Value = fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
 	n.Children = make([]tree.Node, len(v.Children))
-	n.Desc = fmt.Sprintf("%30s%30s", v.Unstructured.GetAPIVersion(), v.Error)
 
+	ready := v.GetCondition(v1.TypeReady)
+	synced := v.GetCondition(v1.TypeSynced)
+
+	g := v.Unstructured.GetObjectKind().GroupVersionKind().Group
+	r := fmt.Sprintf("%s (%s)", ready.Status, ready.LastTransitionTime.Format("02 Jan 06 15:04"))
+	s := fmt.Sprintf("%s (%s)", synced.Status, synced.LastTransitionTime.Format("02 Jan 06 15:04"))
+
+	n.Desc = fmt.Sprintf("%30s%30s%30s", g, s, r)
 	for k, cv := range v.Children {
 		addNodes(cv, &n.Children[k])
 	}
@@ -50,17 +57,8 @@ func initialModel(data *xplane.Resource) model {
 	}
 	addNodes(data, &nodes[0])
 
-	w, h, err := term.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		w = 80
-		h = 24
-	}
-	top, right, bottom, left := styleDoc.GetPadding()
-	w = w - left - right
-	h = h - top - bottom
-
 	return model{
-		tree: tree.New(nodes, w, h),
+		tree: tree.New(nodes, 0, 0),
 		statusbar: statusbar.New(
 			statusbar.ColorConfig{
 				Foreground: lipgloss.AdaptiveColor{Dark: "#ffffff", Light: "#ffffff"},
@@ -79,6 +77,7 @@ var neutralStatusColor = statusbar.ColorConfig{
 }
 
 type model struct {
+	width     int
 	height    int
 	tree      tree.Model
 	statusbar statusbar.Model
@@ -93,15 +92,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	statusOp, statusOpColor := "", neutralStatusColor
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		m.width = msg.Width
 		m.height = msg.Height
-		m.statusbar.SetSize(msg.Width)
+
+		m.statusbar.SetSize(m.width)
 		m.statusbar.SetContent(statusRoot, "", statusOp, "")
+
+		top, right, _, left := styleDoc.GetPadding()
+		m.tree.SetSize(m.width-right-left, m.height-top)
 
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "y":
-			statusOp, statusOpColor = "copied value", statusbar.ColorConfig{
+			statusOp, statusOpColor = "yanked", statusbar.ColorConfig{
 				Foreground: lipgloss.AdaptiveColor{Light: "#ffffff", Dark: "#ffffff"},
 				Background: lipgloss.AdaptiveColor{Light: "#6124DF", Dark: "#6124DF"},
 			}

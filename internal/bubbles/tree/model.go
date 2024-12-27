@@ -202,16 +202,16 @@ func (m *Model) renderTree(remainingNodes []Node, path []string, indent int, cou
 		*count++
 
 		// Format the string with fixed width for the value and description fields
-		valueStr := fmt.Sprintf("%-*s", 60, node.Value)
+		valueStr := ""
 
 		// If we are at the cursor, we add the selected style to the string
 		if m.cursor == idx {
-			valueStr = m.Styles.Selected.Render(valueStr)
+			valueStr = m.Styles.Selected.Render(node.Value)
 		} else {
-			valueStr = m.Styles.Unselected.Render(valueStr)
+			valueStr = m.Styles.Unselected.Render(node.Value)
 		}
 
-		f := fmt.Sprintf("%s%s", shape, valueStr)
+		f := fmt.Sprintf("%s%-*s", shape, 100, valueStr)
 		str += fmt.Sprintf("%s%s\n", truncate.String(f, 60), node.Desc)
 
 		b.WriteString(str)
