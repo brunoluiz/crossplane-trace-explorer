@@ -16,7 +16,7 @@ import (
 func main() {
 	res, err := xplane.Parse(os.Stdin)
 	if err != nil {
-		fmt.Printf("Error while parsing Crossplane JSON: %s\n", err)
+		fmt.Printf("Error while parsing Crossplane: %s\n", err)
 		os.Exit(1)
 	}
 
