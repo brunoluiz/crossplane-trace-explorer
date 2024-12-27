@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/brunoluiz/crossplane-trace-explorer/compare/v1.1.1...v1.1.2) (2024-12-27)
+
+
+### Bug Fixes
+
+* trigger new goreleaser build ([9499d8c](https://github.com/brunoluiz/crossplane-trace-explorer/commit/9499d8c8614e68d2e997d8f03d438058562e11e4))
+
 ## [1.1.1](https://github.com/brunoluiz/crossplane-trace-explorer/compare/v1.1.0...v1.1.1) (2024-12-27)
 
 
