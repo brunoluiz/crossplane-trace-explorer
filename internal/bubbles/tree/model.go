@@ -40,8 +40,10 @@ func (n *Node) GetFullName() string {
 }
 
 type Model struct {
-	KeyMap KeyMap
-	Styles Styles
+	KeyMap                  KeyMap
+	Styles                  Styles
+	AdditionalShortHelpKeys func() []key.Binding
+	Help                    help.Model
 
 	width         int
 	height        int
@@ -49,10 +51,7 @@ type Model struct {
 	nodesByCursor map[int]*Node
 	cursor        int
 
-	Help     help.Model
 	showHelp bool
-
-	AdditionalShortHelpKeys func() []key.Binding
 }
 
 func New(
@@ -152,6 +151,7 @@ func (m *Model) NavDown() {
 }
 
 func (m *Model) Yank() {
+	//nolint // nothing can be done in case of error
 	clipboard.WriteAll(m.nodesByCursor[m.cursor].GetFullName())
 }
 
@@ -160,6 +160,7 @@ func (m *Model) Path() []string {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	//nolint // I prefer switch statements for this
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -193,7 +194,7 @@ func (m Model) View() string {
 		Border(lipgloss.HiddenBorder()).
 		BorderTop(false).
 		BorderHeader(true).
-		StyleFunc(func(row, col int) lipgloss.Style {
+		StyleFunc(func(_, _ int) lipgloss.Style {
 			return lipgloss.NewStyle().PaddingRight(2)
 		}).
 		Headers("OBJECT", "GROUP", "SYNCED", "SYNC LAST UPDATE", "READY", "READY LAST UPDATE", "MESSAGE")
@@ -239,7 +240,10 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string,
 			lo.Elipse(node.Message, 140),
 		)
 		m.nodesByCursor[idx] = &node
-		node.path = append(path, node.Object)
+
+		// Used to be able to trace back the path on the tree
+		node.path = path
+		node.path = append(node.path, node.Object)
 
 		if node.Children != nil {
 			m.renderTree(t, node.Children, node.path, indent+1, count)

@@ -1,4 +1,4 @@
-module github.com/concordalabs/crossplane-trace-explorer
+module github.com/brunoluiz/crossplane-trace-explorer
 
 go 1.23.4
 

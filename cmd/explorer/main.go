@@ -5,17 +5,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/brunoluiz/crossplane-trace-explorer/internal/bubbles/tree"
+	"github.com/brunoluiz/crossplane-trace-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/concordalabs/crossplane-trace-explorer/internal/bubbles/tree"
-	"github.com/concordalabs/crossplane-trace-explorer/internal/xplane"
 	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/mistakenelf/teacup/statusbar"
-)
-
-var (
-	styleDoc = lipgloss.NewStyle().Padding(1)
-	data     *xplane.Resource
 )
 
 func main() {
@@ -83,10 +78,10 @@ var neutralStatusColor = statusbar.ColorConfig{
 }
 
 type model struct {
-	width     int
-	height    int
 	tree      tree.Model
 	statusbar statusbar.Model
+	width     int
+	height    int
 }
 
 func (m model) Init() tea.Cmd {
@@ -104,7 +99,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.statusbar.SetSize(m.width)
 		m.statusbar.SetContent(statusRoot, "", statusOp, "")
 
-		top, right, _, left := styleDoc.GetPadding()
+		top, right, _, left := lipgloss.NewStyle().Padding(1).GetPadding()
 		m.tree.SetSize(m.width-right-left, m.height-top)
 
 		return m, nil

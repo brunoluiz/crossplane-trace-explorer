@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 )
 
 func Parse(r io.ReadCloser) (*Resource, error) {
-	input, err := io.ReadAll(os.Stdin)
+	input, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read from stdin: %w", err)
 	}
