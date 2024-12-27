@@ -9,6 +9,8 @@ builds:
   - env:
       - CGO_ENABLED=0
     goos: ["linux", "darwin", "windows"]
+    main: "./cmd/crossplane-trace-explorer/main.go"
+    binary: "crossplane-trace-explorer"
 
 brews:
   - repository:
