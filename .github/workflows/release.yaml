@@ -39,6 +39,9 @@ jobs:
         id: release-please
         with:
           release-type: go
+      - run: echo $JSON
+        env:
+          JSON: ${{ toJSON(steps.release-please.outputs) }}
 
   release:
     name: Release
