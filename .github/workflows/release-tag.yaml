@@ -1,10 +1,7 @@
-# .github/workflows/release.yml
 name: GoReleaser
 
 on:
-  pull_request:
   push:
-    # run only against tags
     tags:
       - "*"
 
@@ -13,8 +10,8 @@ permissions:
   id-token: write
 
 jobs:
-  release:
-    name: Release
+  generate:
+    name: Generate release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
