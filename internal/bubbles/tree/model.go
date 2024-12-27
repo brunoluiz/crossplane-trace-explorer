@@ -237,7 +237,7 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string,
 			node.Synced.LastTransitionTime.Format("02 Jan 06 15:04"),
 			node.Ready.Status,
 			node.Ready.LastTransitionTime.Format("02 Jan 06 15:04"),
-			lo.Elipse(node.Message, 140),
+			lo.Elipse(node.Message, 96),
 		)
 		m.nodesByCursor[idx] = &node
 
