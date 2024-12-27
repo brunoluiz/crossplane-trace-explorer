@@ -5,12 +5,13 @@ import (
 	"strings"
 
 	"github.com/atotto/clipboard"
+	"github.com/brunoluiz/crossplane-trace-explorer/internal/bubbles/explorer/statusbar"
 	"github.com/brunoluiz/crossplane-trace-explorer/internal/bubbles/tree"
 	"github.com/brunoluiz/crossplane-trace-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/mistakenelf/teacup/statusbar"
+	"github.com/samber/lo"
 )
 
 func addNodes(v *xplane.Resource, n *tree.Node) {
@@ -18,18 +19,18 @@ func addNodes(v *xplane.Resource, n *tree.Node) {
 	ready := v.GetCondition(v1.TypeReady)
 	synced := v.GetCondition(v1.TypeSynced)
 
-	n.Object = fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
-	n.Group = group
+	n.Key = fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
+	n.Value = fmt.Sprintf("%s.%s/%s", v.Unstructured.GetKind(), group, v.Unstructured.GetName())
 	n.Children = make([]tree.Node, len(v.Children))
-	n.Ready = tree.State{
-		Status:             string(ready.Status),
-		LastTransitionTime: ready.LastTransitionTime.Time,
+
+	n.Details = []string{
+		group,
+		string(synced.Status),
+		synced.LastTransitionTime.Format("02 Jan 06 15:04"),
+		string(ready.Status),
+		ready.LastTransitionTime.Format("02 Jan 06 15:04"),
+		lo.Elipse(strings.Join(v.GetUnhealthyStatus(), ", "), 96),
 	}
-	n.Synced = tree.State{
-		Status:             string(synced.Status),
-		LastTransitionTime: synced.LastTransitionTime.Time,
-	}
-	n.Message = strings.Join(v.GetUnhealthyStatus(), ", ")
 
 	for k, cv := range v.Children {
 		addNodes(cv, &n.Children[k])
@@ -38,38 +39,21 @@ func addNodes(v *xplane.Resource, n *tree.Node) {
 
 func New(data *xplane.Resource) Model {
 	nodes := []tree.Node{
-		{
-			Object:   "root",
-			Children: make([]tree.Node, 1),
-		},
+		{Key: "root", Children: make([]tree.Node, 1)},
 	}
 	addNodes(data, &nodes[0])
 
-	t := tree.New(
-		nodes,
-		[]string{"OBJECT", "GROUP", "SYNCED", "SYNC LAST UPDATE", "READY", "READY LAST UPDATE", "MESSAGE"},
-	)
+	t := tree.New(nodes, []string{"OBJECT", "GROUP", "SYNCED", "SYNC LAST UPDATE", "READY", "READY LAST UPDATE", "MESSAGE"})
 	t.OnYank = func(node *tree.Node) {
 		//nolint // nothing can be done in case of error
-		clipboard.WriteAll(node.GetFullName())
+		clipboard.WriteAll(node.Value)
 	}
 	return Model{
 		tree: t,
 		statusbar: statusbar.New(
-			statusbar.ColorConfig{
-				Foreground: lipgloss.AdaptiveColor{Dark: "#ffffff", Light: "#ffffff"},
-				Background: lipgloss.AdaptiveColor{Light: "#F25D94", Dark: "#F25D94"},
-			},
-			neutralStatusColor,
-			neutralStatusColor,
-			neutralStatusColor,
+			statusbar.WithInitialPath([]string{nodes[0].Key}),
 		),
 	}
-}
-
-var neutralStatusColor = statusbar.ColorConfig{
-	Foreground: lipgloss.AdaptiveColor{Light: "#ffffff", Dark: "#ffffff"},
-	Background: lipgloss.AdaptiveColor{Light: "#3c3836", Dark: "#3c3836"},
 }
 
 type Model struct {
@@ -84,15 +68,12 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	statusRoot := "$"
-	statusOp, statusOpColor := "", neutralStatusColor
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 
 		m.statusbar.SetSize(m.width)
-		m.statusbar.SetContent(statusRoot, "", statusOp, "")
 
 		top, right, _, left := lipgloss.NewStyle().Padding(1).GetPadding()
 		m.tree.SetSize(m.width-right-left, m.height-top)
@@ -100,11 +81,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "y":
-			statusOp, statusOpColor = "yanked", statusbar.ColorConfig{
-				Foreground: lipgloss.AdaptiveColor{Light: "#ffffff", Dark: "#ffffff"},
-				Background: lipgloss.AdaptiveColor{Light: "#6124DF", Dark: "#6124DF"},
-			}
 		case "q", "ctrl+c", "esc":
 			return m, tea.Quit
 		case "?":
@@ -112,18 +88,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var cmd tea.Cmd
-	m.tree, cmd = m.tree.Update(msg)
-	m.statusbar.SetContent(statusRoot, strings.Join(m.tree.Path(), "\ueab6 "), "", statusOp)
-	m.statusbar.FourthColumnColors = statusOpColor
+	var treeCmd, statusCmd tea.Cmd
+	m.tree, treeCmd = m.tree.Update(msg)
+	m.statusbar.SetPath(m.tree.Path())
+	m.statusbar, statusCmd = m.statusbar.Update(msg)
 
-	return m, cmd
+	return m, tea.Batch(treeCmd, statusCmd)
 }
 
 func (m Model) View() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
-		lipgloss.NewStyle().Height(m.height-statusbar.Height).Render(m.tree.View()),
+		lipgloss.NewStyle().Height(m.height-m.statusbar.GetHeight()).Render(m.tree.View()),
 		m.statusbar.View(),
 	)
 }

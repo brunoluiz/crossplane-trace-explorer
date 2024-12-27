@@ -10,7 +10,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
-	"github.com/samber/lo"
 )
 
 type KeyMap struct {
@@ -40,19 +39,12 @@ type State struct {
 }
 
 type Node struct {
-	Object  string
-	Group   string
-	Ready   State
-	Synced  State
-	Message string
+	Key     string
+	Value   string
+	Details []string
 
 	Children []Node
 	path     []string
-}
-
-func (n *Node) GetFullName() string {
-	s := strings.Split(n.Object, "/")
-	return fmt.Sprintf("%s.%s/%s", s[0], n.Group, s[1])
 }
 
 type Model struct {
@@ -306,25 +298,19 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string,
 
 		// If we are at the cursor, we add the selected style to the string
 		if m.cursor == idx {
-			valueStr = m.Styles.Selected.Render(node.Object)
+			valueStr = m.Styles.Selected.Render(node.Key)
 		} else {
-			valueStr = m.Styles.Unselected.Render(node.Object)
+			valueStr = m.Styles.Unselected.Render(node.Key)
 		}
 
-		t.Row(
-			fmt.Sprintf("%s%s", shape, valueStr),
-			node.Group,
-			node.Synced.Status,
-			node.Synced.LastTransitionTime.Format("02 Jan 06 15:04"),
-			node.Ready.Status,
-			node.Ready.LastTransitionTime.Format("02 Jan 06 15:04"),
-			lo.Elipse(node.Message, 96),
-		)
+		cols := []string{fmt.Sprintf("%s%s", shape, valueStr)}
+		cols = append(cols, node.Details...)
+		t.Row(cols...)
 		m.nodesByCursor[idx] = &node
 
 		// Used to be able to trace back the path on the tree
 		node.path = path
-		node.path = append(node.path, node.Object)
+		node.path = append(node.path, node.Key)
 
 		if node.Children != nil {
 			m.renderTree(t, node.Children, node.path, indent+1, count)
