@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/brunoluiz/crossplane-trace-explorer/compare/v1.0.0...v1.1.0) (2024-12-27)
+
+
+### Features
+
+* change cli name ([09c4aa5](https://github.com/brunoluiz/crossplane-trace-explorer/commit/09c4aa5db2ff3ac5109cd5fd64842b6a71797c58))
+
+
+### Bug Fixes
+
+* renamed cli was wrong ([8d70bc2](https://github.com/brunoluiz/crossplane-trace-explorer/commit/8d70bc208e1e4311dacc2114eb3adb24f2882108))
+
 ## 1.0.0 (2024-12-27)
 
 
