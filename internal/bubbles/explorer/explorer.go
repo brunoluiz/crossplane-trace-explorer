@@ -45,7 +45,10 @@ func New(data *xplane.Resource) Model {
 	}
 	addNodes(data, &nodes[0])
 
-	t := tree.New(nodes, 0, 0)
+	t := tree.New(
+		nodes,
+		[]string{"OBJECT", "GROUP", "SYNCED", "SYNC LAST UPDATE", "READY", "READY LAST UPDATE", "MESSAGE"},
+	)
 	t.OnYank = func(node *tree.Node) {
 		//nolint // nothing can be done in case of error
 		clipboard.WriteAll(node.GetFullName())
