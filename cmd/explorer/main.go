@@ -11,7 +11,6 @@ import (
 	"github.com/concordalabs/crossplane-trace-explorer/internal/xplane"
 	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/mistakenelf/teacup/statusbar"
-	"github.com/samber/lo"
 )
 
 var (
@@ -33,17 +32,22 @@ func main() {
 }
 
 func addNodes(v *xplane.Resource, n *tree.Node) {
-	n.Value = fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
-	n.Children = make([]tree.Node, len(v.Children))
-
+	group := v.Unstructured.GetObjectKind().GroupVersionKind().Group
 	ready := v.GetCondition(v1.TypeReady)
 	synced := v.GetCondition(v1.TypeSynced)
 
-	g := v.Unstructured.GetObjectKind().GroupVersionKind().Group
-	r := fmt.Sprintf("%s (%s)", ready.Status, ready.LastTransitionTime.Format("02 Jan 06 15:04"))
-	s := fmt.Sprintf("%s (%s)", synced.Status, synced.LastTransitionTime.Format("02 Jan 06 15:04"))
+	n.Object = fmt.Sprintf("%s.%s/%s", v.Unstructured.GetKind(), group, v.Unstructured.GetName())
+	n.Children = make([]tree.Node, len(v.Children))
+	n.Ready = tree.State{
+		Status:    string(ready.Status),
+		UpdatedAt: ready.LastTransitionTime.Time,
+	}
+	n.Synced = tree.State{
+		Status:    string(synced.Status),
+		UpdatedAt: synced.LastTransitionTime.Time,
+	}
+	n.Message = strings.Join(v.GetUnhealthyStatus(), ", ")
 
-	n.Desc = fmt.Sprintf("%30s%30s%30s  %-50s", g, s, r, lo.Elipse(strings.Join(v.GetUnhealthyStatus(), ", "), 50))
 	for k, cv := range v.Children {
 		addNodes(cv, &n.Children[k])
 	}
@@ -52,7 +56,7 @@ func addNodes(v *xplane.Resource, n *tree.Node) {
 func initialModel(data *xplane.Resource) model {
 	nodes := []tree.Node{
 		{
-			Value:    "root",
+			Object:   "root",
 			Children: make([]tree.Node, 1),
 		},
 	}

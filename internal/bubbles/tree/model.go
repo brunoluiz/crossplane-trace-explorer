@@ -3,6 +3,7 @@ package tree
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/help"
@@ -10,15 +11,25 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/truncate"
+	"github.com/samber/lo"
 )
 
 const (
 	bottomLeft string = " └──"
 )
 
+type State struct {
+	Status    string
+	UpdatedAt time.Time
+}
+
 type Node struct {
-	Value    string
-	Desc     string
+	Object  string
+	Group   string
+	Ready   State
+	Synced  State
+	Message string
+
 	Children []Node
 	path     []string
 }
@@ -137,7 +148,7 @@ func (m *Model) NavDown() {
 
 func (m *Model) Yank() {
 	// TODO: deal with errors
-	clipboard.WriteAll(m.nodesByCursor[m.cursor].Value)
+	clipboard.WriteAll(m.nodesByCursor[m.cursor].Object)
 }
 
 func (m *Model) Path() []string {
@@ -206,17 +217,22 @@ func (m *Model) renderTree(remainingNodes []Node, path []string, indent int, cou
 
 		// If we are at the cursor, we add the selected style to the string
 		if m.cursor == idx {
-			valueStr = m.Styles.Selected.Render(node.Value)
+			valueStr = m.Styles.Selected.Render(node.Object)
 		} else {
-			valueStr = m.Styles.Unselected.Render(node.Value)
+			valueStr = m.Styles.Unselected.Render(node.Object)
 		}
 
 		f := fmt.Sprintf("%s%-*s", shape, 100, valueStr)
-		str += fmt.Sprintf("%s%s\n", truncate.String(f, 60), node.Desc)
+
+		r := fmt.Sprintf("%s (%s)", node.Ready.Status, node.Ready.UpdatedAt.Format("02 Jan 06 15:04"))
+		s := fmt.Sprintf("%s (%s)", node.Synced.Status, node.Synced.UpdatedAt.Format("02 Jan 06 15:04"))
+		msg := lo.Elipse(node.Message, 50)
+		desc := fmt.Sprintf("%30s%30s  %-50s", s, r, msg)
+		str += fmt.Sprintf("%s%s\n", truncate.String(f, 60), desc)
 
 		b.WriteString(str)
 		m.nodesByCursor[idx] = &node
-		node.path = append(path, node.Value)
+		node.path = append(path, node.Object)
 
 		if node.Children != nil {
 			childStr := m.renderTree(node.Children, node.path, indent+1, count)
