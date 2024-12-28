@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/samber/lo"
+	k8sv1 "k8s.io/api/core/v1"
 )
 
 func addNodes(v *xplane.Resource, n *tree.Node) {
@@ -22,6 +23,18 @@ func addNodes(v *xplane.Resource, n *tree.Node) {
 	n.Key = fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
 	n.Value = fmt.Sprintf("%s.%s/%s", v.Unstructured.GetKind(), group, v.Unstructured.GetName())
 	n.Children = make([]tree.Node, len(v.Children))
+
+	paused := v.Unstructured.GetAnnotations()["crossplane.io/paused"]
+	if paused == "true" {
+		n.Key += " (paused)"
+		n.Selected = tree.ColorConfig{Background: lipgloss.Color("#FFB86C"), Foreground: lipgloss.Color("#FFFFFF")}
+		n.Unselected = tree.ColorConfig{Foreground: lipgloss.Color("#FFB86C")}
+	}
+
+	if synced.Status == k8sv1.ConditionFalse || ready.Status == k8sv1.ConditionFalse {
+		n.Selected = tree.ColorConfig{Background: lipgloss.Color("#FF5555"), Foreground: lipgloss.Color("#FFFFFF")}
+		n.Unselected = tree.ColorConfig{Foreground: lipgloss.Color("#FF5555")}
+	}
 
 	n.Details = []string{
 		group,
@@ -48,6 +61,7 @@ func New(data *xplane.Resource) Model {
 		//nolint // nothing can be done in case of error
 		clipboard.WriteAll(node.Value)
 	}
+
 	return Model{
 		tree: t,
 		statusbar: statusbar.New(

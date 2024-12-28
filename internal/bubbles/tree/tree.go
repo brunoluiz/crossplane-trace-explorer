@@ -38,10 +38,18 @@ type State struct {
 	Status             string
 }
 
+type ColorConfig struct {
+	Foreground lipgloss.Color
+	Background lipgloss.Color
+}
+
 type Node struct {
 	Key     string
 	Value   string
 	Details []string
+
+	Selected   ColorConfig
+	Unselected ColorConfig
 
 	Children []Node
 	path     []string
@@ -115,10 +123,10 @@ func New(
 			),
 		},
 		Styles: Styles{
-			Shapes:     lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.Color("#bd93f9")),
-			Selected:   lipgloss.NewStyle().Margin(0, 0, 0, 0).Background(lipgloss.Color("#bd93f9")),
-			Unselected: lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}),
-			Help:       lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.AdaptiveColor{Light: "#000000", Dark: "#ffffff"}),
+			Shapes:     lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.Color("#999")),
+			Selected:   lipgloss.NewStyle().Margin(0, 0, 0, 0).Background(lipgloss.AdaptiveColor{Light: "#333", Dark: "#eee"}).Foreground(lipgloss.AdaptiveColor{Light: "#eee", Dark: "#333"}),
+			Unselected: lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.AdaptiveColor{Light: "#333", Dark: "#eee"}),
+			Help:       lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.AdaptiveColor{Light: "#333", Dark: "#eee"}),
 		},
 
 		width:         0,
@@ -295,16 +303,27 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string,
 
 		// Format the string with fixed width for the value and description fields
 		valueStr := ""
+		unselectedStyle := lipgloss.NewStyle().Inherit(m.Styles.Unselected)
+		if node.Unselected.Foreground != "" {
+			unselectedStyle = unselectedStyle.Foreground(node.Unselected.Foreground)
+		}
 
 		// If we are at the cursor, we add the selected style to the string
 		if m.cursor == idx {
-			valueStr = m.Styles.Selected.Render(node.Key)
+			s := lipgloss.NewStyle().Inherit(m.Styles.Selected)
+			if node.Selected.Background != "" {
+				s = s.Foreground(node.Selected.Foreground).Background(node.Selected.Background)
+			}
+			valueStr = s.Render(node.Key)
 		} else {
-			valueStr = m.Styles.Unselected.Render(node.Key)
+			valueStr = unselectedStyle.Render(node.Key)
 		}
 
 		cols := []string{fmt.Sprintf("%s%s", shape, valueStr)}
 		cols = append(cols, node.Details...)
+		for k := range cols {
+			cols[k] = unselectedStyle.Render(cols[k])
+		}
 		t.Row(cols...)
 		m.nodesByCursor[idx] = &node
 

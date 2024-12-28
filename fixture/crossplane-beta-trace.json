@@ -195,7 +195,10 @@
             "apiVersion": "test.cloud/v1alpha1",
             "kind": "User",
             "metadata": {
-              "name": "test-resource-user-hash"
+              "name": "test-resource-user-hash",
+              "annotations": {
+                "crossplane.io/paused": "true"
+              }
             },
             "status": {
               "conditions": [
