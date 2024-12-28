@@ -7,6 +7,7 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/brunoluiz/crossplane-trace-explorer/internal/bubbles/explorer/statusbar"
 	"github.com/brunoluiz/crossplane-trace-explorer/internal/bubbles/tree"
+	"github.com/brunoluiz/crossplane-trace-explorer/internal/tui"
 	"github.com/brunoluiz/crossplane-trace-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -14,6 +15,8 @@ import (
 	"github.com/samber/lo"
 	k8sv1 "k8s.io/api/core/v1"
 )
+
+const dateFormat = "02 Jan 06 15:04"
 
 func addNodes(v *xplane.Resource, n *tree.Node) {
 	group := v.Unstructured.GetObjectKind().GroupVersionKind().Group
@@ -27,21 +30,19 @@ func addNodes(v *xplane.Resource, n *tree.Node) {
 	paused := v.Unstructured.GetAnnotations()["crossplane.io/paused"]
 	if paused == "true" {
 		n.Key += " (paused)"
-		n.Selected = tree.ColorConfig{Background: lipgloss.Color("#FFB86C"), Foreground: lipgloss.Color("#FFFFFF")}
-		n.Unselected = tree.ColorConfig{Foreground: lipgloss.Color("#FFB86C")}
+		n.Selected = tree.ColorConfig{Background: tui.ColorWarn, Foreground: tui.ColorLight}
+		n.Unselected = tree.ColorConfig{Foreground: tui.ColorWarn}
 	}
 
 	if synced.Status == k8sv1.ConditionFalse || ready.Status == k8sv1.ConditionFalse {
-		n.Selected = tree.ColorConfig{Background: lipgloss.Color("#FF5555"), Foreground: lipgloss.Color("#FFFFFF")}
-		n.Unselected = tree.ColorConfig{Foreground: lipgloss.Color("#FF5555")}
+		n.Selected = tree.ColorConfig{Background: tui.ColorAlert, Foreground: tui.ColorLight}
+		n.Unselected = tree.ColorConfig{Foreground: tui.ColorAlert}
 	}
 
 	n.Details = []string{
 		group,
-		string(synced.Status),
-		synced.LastTransitionTime.Format("02 Jan 06 15:04"),
-		string(ready.Status),
-		ready.LastTransitionTime.Format("02 Jan 06 15:04"),
+		string(synced.Status), synced.LastTransitionTime.Format(dateFormat),
+		string(ready.Status), ready.LastTransitionTime.Format(dateFormat),
 		lo.Elipse(strings.Join(v.GetUnhealthyStatus(), ", "), 96),
 	}
 
@@ -86,7 +87,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-
 		m.statusbar.SetSize(m.width)
 
 		top, right, _, left := lipgloss.NewStyle().Padding(1).GetPadding()

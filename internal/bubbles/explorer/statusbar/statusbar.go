@@ -99,7 +99,7 @@ func (m *Model) SetSize(w int) {
 }
 
 func (m *Model) GetHeight() int {
-	return m.statusbar.Height
+	return statusbar.Height
 }
 
 func (m Model) Init() tea.Cmd {

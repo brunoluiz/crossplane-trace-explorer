@@ -275,7 +275,7 @@ func (m Model) View() string {
 		StyleFunc(func(_, _ int) lipgloss.Style {
 			return lipgloss.NewStyle().PaddingRight(2)
 		}).
-		Headers("OBJECT", "GROUP", "SYNCED", "SYNC LAST UPDATE", "READY", "READY LAST UPDATE", "MESSAGE")
+		Headers(m.headers...)
 
 	count := 0 // This is used to keep track of the index of the node we are on (important because we are using a recursive function)
 	m.renderTree(t, m.nodes, []string{}, 0, &count)
