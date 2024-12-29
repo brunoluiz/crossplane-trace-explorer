@@ -46,12 +46,12 @@ type ColorConfig struct {
 type Node struct {
 	Key     string
 	Value   string
-	Details []string
+	Details map[string]string
 
 	Selected   ColorConfig
 	Unselected ColorConfig
 
-	Children []Node
+	Children []*Node
 	path     []string
 }
 
@@ -65,7 +65,7 @@ type Model struct {
 
 	width         int
 	height        int
-	nodes         []Node
+	nodes         []*Node
 	nodesByCursor map[int]*Node
 	cursor        int
 	headers       []string
@@ -74,7 +74,7 @@ type Model struct {
 }
 
 func New(
-	nodes []Node,
+	nodes []*Node,
 	headers []string,
 ) Model {
 	return Model{
@@ -140,19 +140,32 @@ func New(
 	}
 }
 
-func (m Model) Nodes() []Node {
-	return m.nodes
+func (m Model) Nodes() []*Node { return m.nodes }
+func (m Model) Width() int     { return m.width }
+func (m Model) Height() int    { return m.height }
+func (m Model) Cursor() int    { return m.cursor }
+func (m Model) Current() *Node { return m.nodesByCursor[m.cursor] }
+func (m Model) Path() []string { return m.nodesByCursor[m.cursor].path }
+
+func (m *Model) SetNodes(nodes []*Node)    { m.nodes = nodes }
+func (m *Model) SetSize(width, height int) { m.width = width; m.height = height }
+func (m *Model) SetWidth(newWidth int)     { m.SetSize(newWidth, m.height) }
+func (m *Model) SetHeight(newHeight int)   { m.SetSize(m.width, newHeight) }
+func (m *Model) SetCursor(cursor int)      { m.cursor = cursor }
+func (m *Model) SetShowHelp() bool         { return m.showHelp }
+
+func (m *Model) onSelectionChange(node *Node) {
+	if m.OnSelectionChange == nil {
+		return
+	}
+	m.OnSelectionChange(node)
 }
 
-func (m *Model) SetNodes(nodes []Node) {
-	m.nodes = nodes
-}
-
-func (m *Model) NumberOfNodes() int {
+func (m *Model) numberOfNodes() int {
 	count := 0
 
-	var countNodes func([]Node)
-	countNodes = func(nodes []Node) {
+	var countNodes func([]*Node)
+	countNodes = func(nodes []*Node) {
 		for _, node := range nodes {
 			count++
 			if node.Children != nil {
@@ -164,53 +177,6 @@ func (m *Model) NumberOfNodes() int {
 	countNodes(m.nodes)
 
 	return count
-}
-
-func (m Model) Width() int {
-	return m.width
-}
-
-func (m Model) Height() int {
-	return m.height
-}
-
-func (m *Model) SetSize(width, height int) {
-	m.width = width
-	m.height = height
-}
-
-func (m *Model) SetWidth(newWidth int) {
-	m.SetSize(newWidth, m.height)
-}
-
-func (m *Model) SetHeight(newHeight int) {
-	m.SetSize(m.width, newHeight)
-}
-
-func (m Model) Cursor() int {
-	return m.cursor
-}
-
-func (m *Model) SetCursor(cursor int) {
-	m.cursor = cursor
-}
-
-func (m *Model) SetShowHelp() bool {
-	return m.showHelp
-}
-
-func (m *Model) onSelectionChange(node *Node) {
-	if m.OnSelectionChange == nil {
-		return
-	}
-	m.OnSelectionChange(node)
-}
-
-func (m *Model) onYank(node *Node) {
-	if m.OnYank == nil {
-		return
-	}
-	m.OnYank(node)
 }
 
 func (m *Model) onNavUp() {
@@ -227,14 +193,10 @@ func (m *Model) onNavDown() {
 	m.cursor++
 	m.onSelectionChange(m.nodesByCursor[m.cursor])
 
-	if m.cursor >= m.NumberOfNodes() {
-		m.cursor = m.NumberOfNodes() - 1
+	if m.cursor >= m.numberOfNodes() {
+		m.cursor = m.numberOfNodes() - 1
 		return
 	}
-}
-
-func (m *Model) Path() []string {
-	return m.nodesByCursor[m.cursor].path
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -246,8 +208,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.onNavUp()
 		case key.Matches(msg, m.KeyMap.Down):
 			m.onNavDown()
-		case key.Matches(msg, m.KeyMap.Yank):
-			m.onYank(m.nodesByCursor[m.cursor])
 		case key.Matches(msg, m.KeyMap.ShowFullHelp):
 			fallthrough
 		case key.Matches(msg, m.KeyMap.CloseFullHelp):
@@ -287,7 +247,7 @@ func (m Model) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, lipgloss.NewStyle().Height(availableHeight).Render(t.Render()), help)
 }
 
-func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string, indent int, count *int) {
+func (m *Model) renderTree(t *table.Table, remainingNodes []*Node, path []string, indent int, count *int) {
 	const treeNodePrefix string = " └──"
 
 	for _, node := range remainingNodes {
@@ -320,12 +280,11 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []Node, path []string,
 		}
 
 		cols := []string{fmt.Sprintf("%s%s", shape, valueStr)}
-		cols = append(cols, node.Details...)
-		for k := range cols {
-			cols[k] = unselectedStyle.Render(cols[k])
+		for _, v := range m.headers[1:] {
+			cols = append(cols, unselectedStyle.Render(node.Details[v]))
 		}
 		t.Row(cols...)
-		m.nodesByCursor[idx] = &node
+		m.nodesByCursor[idx] = node
 
 		// Used to be able to trace back the path on the tree
 		node.path = path

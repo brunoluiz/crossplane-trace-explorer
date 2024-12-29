@@ -89,21 +89,14 @@ func New(opts ...WithOpt) Model {
 	}
 }
 
+func (m Model) Init() tea.Cmd   { return nil }
+func (m *Model) SetSize(w int)  { m.statusbar.SetSize(w) }
+func (m *Model) GetHeight() int { return statusbar.Height }
+func (m *Model) View() string   { return m.statusbar.View() }
+
 func (m *Model) SetPath(path []string) {
 	m.path = path
 	m.statusbar.SecondColumn = strings.Join(m.path, m.pathSeparator)
-}
-
-func (m *Model) SetSize(w int) {
-	m.statusbar.SetSize(w)
-}
-
-func (m *Model) GetHeight() int {
-	return statusbar.Height
-}
-
-func (m Model) Init() tea.Cmd {
-	return nil
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -111,6 +104,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	m.statusbar.FourthColumn = ""
 	m.statusbar.FourthColumnColors = m.neutralColor
 
+	//nolint // let me use my switches
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -121,8 +115,4 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	return m, nil
-}
-
-func (m *Model) View() string {
-	return m.statusbar.View()
 }

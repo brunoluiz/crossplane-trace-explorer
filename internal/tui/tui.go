@@ -7,4 +7,6 @@ const (
 	ColorWarn  = lipgloss.Color("#FFB86C")
 	ColorLight = lipgloss.Color("#EEEEEE")
 	ColorDark  = lipgloss.Color("#333333")
+
+	DateFormat = "02 Jan 06 15:04"
 )
