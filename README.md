@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  🧰 Enhanced Crossplane trace explorer
+  🧰 Enhanced Crossplane explorer
 </p>
 
 ![screenshot](./screenshot.png)
@@ -14,13 +14,16 @@ an interactive tracing explorer based on the tool tracer output.
 
 ## ✨ Features
 
-- Allow copying/yanking object value, including API group to avoid conflict
-- Display last transition times by default
+### Trace
+
+✨ Expanded details at a glance
+📋 Allow full object name yanking from selected items
+📖 Describe selected trace object details easily
+♻️ (WIP) Automatic trace refresh
 
 ### Upcoming
 
-- Describe Kubernetes object from the explorer
-- Allow expanding error messages in the UI (shortcut `K`)
+- Call Kubernetes API when describing object
 - Allow mutating resource annotations (pause, finaliser)
 
 ## 📀 Install
