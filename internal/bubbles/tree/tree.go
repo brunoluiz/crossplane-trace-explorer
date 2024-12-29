@@ -73,10 +73,7 @@ type Model struct {
 	showHelp bool
 }
 
-func New(
-	nodes []*Node,
-	headers []string,
-) Model {
+func New(headers []string) Model {
 	return Model{
 		KeyMap: KeyMap{
 			Bottom: key.NewBinding(
@@ -131,7 +128,6 @@ func New(
 
 		width:         0,
 		height:        0,
-		nodes:         nodes,
 		nodesByCursor: map[int]*Node{},
 		headers:       headers,
 

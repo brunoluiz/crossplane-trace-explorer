@@ -56,9 +56,11 @@ func cmdTrace() *cli.Command {
 			if err != nil {
 				return fmt.Errorf("Error while parsing Crossplane JSON: %w", err)
 			}
+			e := explorer.New()
+			e.Load(res)
 
 			_, err = tea.NewProgram(
-				explorer.New(res),
+				e,
 				tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 				tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 			).Run()

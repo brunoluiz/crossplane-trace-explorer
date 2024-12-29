@@ -45,31 +45,21 @@ type Model struct {
 	resByNode map[*tree.Node]*xplane.Resource
 }
 
-func New(data *xplane.Resource) Model {
-	nodes := []*tree.Node{
-		{Key: "root", Children: make([]*tree.Node, 1)},
-	}
-	resByNode := map[*tree.Node]*xplane.Resource{}
-	addNodes(data, nodes[0], resByNode)
-
-	t := tree.New(nodes, []string{
-		HeaderKeyObject,
-		HeaderKeyGroup,
-		HeaderKeySynced,
-		HeaderKeySyncedLast,
-		HeaderKeyReady,
-		HeaderKeyReadyLast,
-		HeaderKeyMessage,
-	})
-
+func New() Model {
 	return Model{
-		tree: t,
-		statusbar: statusbar.New(
-			statusbar.WithInitialPath([]string{nodes[0].Key}),
-		),
+		tree: tree.New([]string{
+			HeaderKeyObject,
+			HeaderKeyGroup,
+			HeaderKeySynced,
+			HeaderKeySyncedLast,
+			HeaderKeyReady,
+			HeaderKeyReadyLast,
+			HeaderKeyMessage,
+		}),
+		statusbar: statusbar.New(),
 		viewer:    viewer.New(),
 		pane:      PaneTree,
-		resByNode: resByNode,
+		resByNode: map[*tree.Node]*xplane.Resource{},
 	}
 }
 
@@ -132,6 +122,17 @@ func (m Model) View() string {
 	default:
 		return "No pane selected"
 	}
+}
+
+func (m *Model) Load(data *xplane.Resource) {
+	nodes := []*tree.Node{
+		{Key: "root", Children: make([]*tree.Node, 1)},
+	}
+	resByNode := map[*tree.Node]*xplane.Resource{}
+	addNodes(data, nodes[0], resByNode)
+
+	m.tree.SetNodes(nodes)
+	m.resByNode = resByNode
 }
 
 func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane.Resource) {
