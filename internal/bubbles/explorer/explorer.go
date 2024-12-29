@@ -143,15 +143,12 @@ func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane
 	n.Value = fmt.Sprintf("%s.%s/%s", v.Unstructured.GetKind(), group, v.Unstructured.GetName())
 	n.Children = make([]*tree.Node, len(v.Children))
 
-	paused := v.Unstructured.GetAnnotations()["crossplane.io/paused"]
-	if paused == "true" {
+	if v.Unstructured.GetAnnotations()["crossplane.io/paused"] == "true" {
 		n.Key += " (paused)"
-		n.Selected = tree.ColorConfig{Background: tui.ColorWarn, Foreground: tui.ColorLight}
 		n.Unselected = tree.ColorConfig{Foreground: tui.ColorWarn}
 	}
 
 	if synced.Status == k8sv1.ConditionFalse || ready.Status == k8sv1.ConditionFalse {
-		n.Selected = tree.ColorConfig{Background: tui.ColorAlert, Foreground: tui.ColorLight}
 		n.Unselected = tree.ColorConfig{Foreground: tui.ColorAlert}
 	}
 
