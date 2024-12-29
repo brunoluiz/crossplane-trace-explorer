@@ -16,10 +16,10 @@ an interactive tracing explorer based on the tool tracer output.
 
 ### Trace
 
-✨ Expanded details at a glance
-📋 Allow full object name yanking from selected items
-📖 Describe selected trace object details easily
-♻️ (WIP) Automatic trace refresh
+- ✨ Expanded details at a glance
+- 📋 Allow full object name yanking from selected items
+- 📖 Describe selected trace object details easily
+- ♻️ (WIP) Automatic trace refresh
 
 ### Upcoming
 
