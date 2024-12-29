@@ -1,5 +1,5 @@
 <h1 align="center">
-  crossplane-trace-explorer
+  crossplane-explorer
 </h1>
 
 <p align="center">
@@ -27,12 +27,12 @@ an interactive tracing explorer based on the tool tracer output.
 
 ### Linux and Windows
 
-[Check the releases section](https://github.com/brunoluiz/crossplane-trace-explorer/releases) for more information details.
+[Check the releases section](https://github.com/brunoluiz/crossplane-explorer/releases) for more information details.
 
 ### MacOS
 
 ```
-brew install brunoluiz/tap/crossplane-trace-explorer
+brew install brunoluiz/tap/crossplane-explorer
 ```
 
 ### Other
@@ -40,7 +40,7 @@ brew install brunoluiz/tap/crossplane-trace-explorer
 Use `go install` to install it
 
 ```
-go install github.com/brunoluiz/crossplane-trace-explorer@latest
+go install github.com/brunoluiz/crossplane-explorer@latest
 ```
 
 ## ⚙️ Usage
@@ -48,7 +48,7 @@ go install github.com/brunoluiz/crossplane-trace-explorer@latest
 You must have `crossplane` installed. Run the tracer with `-o json` and pipe it to this tool.
 
 ```
-crossplane beta trace Bucket/test-resource-bucket-hash -o json | crossplane-trace-explorer
+crossplane beta trace Bucket/test-resource-bucket-hash -o json | crossplane-explorer
 ```
 
 ## 🧾 To-do

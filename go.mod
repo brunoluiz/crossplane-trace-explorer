@@ -1,4 +1,4 @@
-module github.com/brunoluiz/crossplane-trace-explorer
+module github.com/brunoluiz/crossplane-explorer
 
 go 1.23.4
 
@@ -50,6 +50,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/urfave/cli/v3 v3.0.0-beta1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect

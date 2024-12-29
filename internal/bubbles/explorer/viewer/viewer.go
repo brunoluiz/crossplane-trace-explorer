@@ -3,9 +3,9 @@ package viewer
 import (
 	"fmt"
 
-	"github.com/brunoluiz/crossplane-trace-explorer/internal/bubbles/viewer"
-	"github.com/brunoluiz/crossplane-trace-explorer/internal/tui"
-	"github.com/brunoluiz/crossplane-trace-explorer/internal/xplane"
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/viewer"
+	"github.com/brunoluiz/crossplane-explorer/internal/tui"
+	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
