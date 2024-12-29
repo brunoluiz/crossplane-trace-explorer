@@ -3,16 +3,20 @@ package main
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer"
+	"github.com/brunoluiz/crossplane-explorer/internal/tasker"
 	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/urfave/cli/v3"
+	"golang.org/x/sync/errgroup"
 )
 
 func cmdTrace() *cli.Command {
@@ -22,9 +26,9 @@ func cmdTrace() *cli.Command {
 		Aliases: []string{"t"},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "cmd",
-				Usage:       "Which binary should it use to generate the JSON trace",
-				DefaultText: "crossplane beta trace -o json",
+				Name:  "cmd",
+				Usage: "Which binary should it use to generate the JSON trace",
+				Value: "crossplane beta trace -o json",
 			},
 			&cli.StringFlag{
 				Name:  "name",
@@ -38,37 +42,54 @@ func cmdTrace() *cli.Command {
 				Name:  "watch",
 				Usage: "Refresh trace every 10 seconds",
 			},
+			&cli.DurationFlag{
+				Name:  "watch-interval",
+				Usage: "Refresh interval for the watcher feature",
+				Value: 5 * time.Second,
+			},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			var r io.Reader
+			ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt)
+			defer stop()
 
-			if c.Bool("stdin") {
-				r = os.Stdin
-			} else {
-				var err error
-				r, err = execCrossplane(c.String("cmd"), c.String("name"))
-				if err != nil {
-					return err
-				}
-			}
-
-			res, err := xplane.Parse(r)
-			if err != nil {
-				return fmt.Errorf("Error while parsing Crossplane JSON: %w", err)
-			}
-			e := explorer.New()
-			e.Load(res)
-
-			_, err = tea.NewProgram(
-				e,
+			eg, egCtx := errgroup.WithContext(ctx)
+			app := tea.NewProgram(
+				explorer.New(),
 				tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 				tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
-			).Run()
-			if err != nil {
-				return err
-			}
+				tea.WithContext(egCtx),
+			)
 
-			return nil
+			eg.Go(func() error {
+				_, err := app.Run()
+				stop()
+				return err
+			})
+
+			eg.Go(func() error {
+				cb := func() error {
+					r, err := execCrossplane(c.String("cmd"), c.String("name"))
+					if err != nil {
+						return err
+					}
+
+					app.Send(xplane.MustParse(r))
+					return nil
+				}
+
+				if c.Bool("stdin") {
+					app.Send(xplane.MustParse(os.Stdin))
+					return nil
+				}
+
+				if !c.Bool("watch") {
+					return cb()
+				}
+
+				return tasker.Periodic(egCtx, c.Duration("watch-interval"), cb)
+			})
+
+			return eg.Wait()
 		},
 	}
 }

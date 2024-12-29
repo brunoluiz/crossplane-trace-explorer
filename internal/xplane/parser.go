@@ -19,3 +19,12 @@ func Parse(r io.Reader) (*Resource, error) {
 
 	return data, nil
 }
+
+func MustParse(r io.Reader) *Resource {
+	data, err := Parse(r)
+	if err != nil {
+		panic(err)
+	}
+
+	return data
+}

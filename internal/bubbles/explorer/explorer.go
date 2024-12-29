@@ -45,8 +45,8 @@ type Model struct {
 	resByNode map[*tree.Node]*xplane.Resource
 }
 
-func New() Model {
-	return Model{
+func New() *Model {
+	return &Model{
 		tree: tree.New([]string{
 			HeaderKeyObject,
 			HeaderKeyGroup,
@@ -69,6 +69,8 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case *xplane.Resource:
+		m.Load(msg)
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height

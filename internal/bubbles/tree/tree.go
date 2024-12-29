@@ -141,7 +141,12 @@ func (m Model) Width() int     { return m.width }
 func (m Model) Height() int    { return m.height }
 func (m Model) Cursor() int    { return m.cursor }
 func (m Model) Current() *Node { return m.nodesByCursor[m.cursor] }
-func (m Model) Path() []string { return m.nodesByCursor[m.cursor].path }
+func (m Model) Path() []string {
+	if m.nodesByCursor != nil && m.nodesByCursor[m.cursor] != nil {
+		return m.nodesByCursor[m.cursor].path
+	}
+	return []string{}
+}
 
 func (m *Model) SetNodes(nodes []*Node)    { m.nodes = nodes }
 func (m *Model) SetSize(width, height int) { m.width = width; m.height = height }

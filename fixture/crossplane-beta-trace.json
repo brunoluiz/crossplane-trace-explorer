@@ -185,6 +185,28 @@
                       ]
                     }
                   }
+                },
+                {
+                  "object": {
+                    "apiVersion": "test.cloud/v1alpha1",
+                    "kind": "User",
+                    "metadata": {
+                      "annotations": {
+                        "crossplane.io/composition-resource-name": ""
+                      },
+                      "name": "test-resource-child-2-1-bucket-hash"
+                    },
+                    "status": {
+                      "conditions": [
+                        {
+                          "lastTransitionTime": null,
+                          "reason": "",
+                          "status": "True",
+                          "type": "Synced"
+                        }
+                      ]
+                    }
+                  }
                 }
               ]
             }
