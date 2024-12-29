@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-func Parse(r io.ReadCloser) (*Resource, error) {
+func Parse(r io.Reader) (*Resource, error) {
 	input, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read from stdin: %w", err)
