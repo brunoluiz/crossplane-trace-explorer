@@ -16,7 +16,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = tea.NewProgram(explorer.New(res)).Run()
+	_, err = tea.NewProgram(
+		explorer.New(res),
+		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
+		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
+	).Run()
 	if err != nil {
 		os.Exit(1)
 	}
