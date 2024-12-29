@@ -21,10 +21,10 @@ var (
 			MarginLeft(2)
 
 	okHealthStyle = lipgloss.NewStyle().
-			Bold(true).Foreground(lipgloss.Color("#50FA7B"))
+			Bold(true).Foreground(lipgloss.Color(tui.ColorGreen))
 
 	badHealthStyle = lipgloss.NewStyle().
-			Bold(true).Foreground(lipgloss.Color("#FF5555"))
+			Bold(true).Foreground(lipgloss.Color(tui.ColorRed))
 
 	metadataStyle = lipgloss.NewStyle().
 			Bold(true)

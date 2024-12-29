@@ -3,6 +3,7 @@ package viewer
 import (
 	"fmt"
 
+	"github.com/brunoluiz/crossplane-explorer/internal/tui"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -20,8 +21,8 @@ var (
 	titleStyle = func() lipgloss.Style {
 		return lipgloss.NewStyle().
 			Bold(true).
-			Background(lipgloss.Color("#6272A4")).
-			Foreground(lipgloss.Color("#F8F8F2")).
+			Background(lipgloss.Color(tui.ColorBrightBlack)).
+			Foreground(lipgloss.Color(tui.ColorWhite)).
 			Padding(0, 1, 0, 1).
 			Margin(1, 0, 0, 1)
 	}()
@@ -29,8 +30,8 @@ var (
 	sideTitleStyle = func() lipgloss.Style {
 		return lipgloss.NewStyle().
 			Bold(true).
-			Background(lipgloss.Color("#44475A")).
-			Foreground(lipgloss.Color("#F8F8F2")).
+			Background(lipgloss.Color(tui.ColorBlue)).
+			Foreground(lipgloss.Color(tui.ColorWhite)).
 			Padding(0, 1, 0, 1).
 			Margin(1, 0, 0, 1)
 	}()
