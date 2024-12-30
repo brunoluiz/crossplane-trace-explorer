@@ -11,3 +11,7 @@ The hack around it was to call the `cancel` when the `tea.Quit` happens and hand
 2. base16 colors can be used as a way to keep the app colours the same in any machine. See `tui` package.
 
 3. Crossplane does not sadly expose its internals. Everything is in `internal/`.
+
+4. The correct way to use `bubbletea` seems to be by using events. So I tried to refactor and try to expose
+only read-only methods through the struct. Anything that would do a mutation should be an event and is handled
+within the `events.go` file (might be called `handlers.go` in the future).

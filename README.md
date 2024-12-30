@@ -19,7 +19,7 @@ an interactive tracing explorer based on the tool tracer output.
 - ✨ Expanded details at a glance
 - 📋 Allow full object name yanking from selected items
 - 📖 Describe selected trace object details easily
-- ♻️ (WIP) Automatic trace refresh
+- ♻️ Automatic trace refresh
 
 ### Upcoming
 
@@ -51,13 +51,12 @@ go install github.com/brunoluiz/crossplane-explorer@latest
 You must have `crossplane` installed. Run the tracer with `-o json` and pipe it to this tool.
 
 ```
-crossplane beta trace Bucket/test-resource-bucket-hash -o json | crossplane-explorer
+crossplane beta trace Bucket/test-resource-bucket-hash -o json | crossplane-explorer trace
 ```
 
 ## 🧾 To-do
 
 - Re-do the `addNodes` feature
 - Add comments to functions
-- Review hooks x Elm Bubble model
 - Allow short and wide table format
 - Understand why first render of statusbar is not rendering selected path without hack
