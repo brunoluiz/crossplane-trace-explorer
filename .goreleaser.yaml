@@ -10,8 +10,8 @@ builds:
       - CGO_ENABLED=0
     goos: ["linux", "darwin", "windows"]
     goarch: ["amd64", "arm64"]
-    main: "./cmd/crossplane-trace-explorer/main.go"
-    binary: "crossplane-trace-explorer"
+    main: "./cmd/crossplane-explorer"
+    binary: "crossplane-explorer"
     ignore:
       - goos: "darwin"
         goarch: "amd64"

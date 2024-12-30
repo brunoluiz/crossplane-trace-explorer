@@ -22,6 +22,7 @@ func (m *Model) onResize(msg tea.WindowSizeMsg) tea.Cmd {
 }
 
 func (m *Model) onKey(msg tea.KeyMsg) tea.Cmd {
+	//nolint // allow usage of switch
 	switch msg.String() {
 	case "y":
 		m.statusbar.FourthColumn = "yanked"

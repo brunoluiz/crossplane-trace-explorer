@@ -8,7 +8,9 @@ import (
 // Periodic runs a certain cb function given a specific interval. It will
 // always call the cb function at setup.
 func Periodic(ctx context.Context, interval time.Duration, cb func() error) error {
-	cb()
+	if err := cb(); err != nil {
+		return err
+	}
 
 	ticker := time.NewTicker(interval)
 	for {

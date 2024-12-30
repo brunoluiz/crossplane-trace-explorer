@@ -47,6 +47,7 @@ func (m *Model) onKey(msg tea.KeyMsg) tea.Cmd {
 	case "ctrl+c", "ctlr+d":
 		return tea.Interrupt
 	case "y":
+		//nolint // ignore errors
 		clipboard.WriteAll(m.tree.Current().Value)
 	case "enter":
 		v := m.resByNode[m.tree.Current()]

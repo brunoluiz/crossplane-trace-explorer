@@ -78,6 +78,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	t, treeCmd := m.tree.Update(msg)
 	s, statusCmd := m.statusbar.Update(msg)
 	v, viewerCmd := m.viewer.Update(msg)
+
+	//nolint // trust the typecast
 	m.tree, m.statusbar, m.viewer = t.(*tree.Model), s.(*statusbar.Model), v.(*viewer.Model)
 
 	return m, tea.Batch(cmd, treeCmd, statusCmd, viewerCmd)

@@ -25,6 +25,6 @@ func main() {
 	if err := cmdMain(
 		cmdTrace(),
 	).Run(ctx, os.Args); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }

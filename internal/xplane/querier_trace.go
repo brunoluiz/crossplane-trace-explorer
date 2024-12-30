@@ -16,7 +16,8 @@ type CLITraceQuerier struct {
 func NewCLITraceQuerier(cmd string, name string) *CLITraceQuerier {
 	s := strings.Split(cmd, " ")
 	app := s[0]
-	args := append(s[1:], name)
+	args := s[1:]
+	args = append(args, name)
 
 	return &CLITraceQuerier{
 		app:  app,
@@ -25,6 +26,7 @@ func NewCLITraceQuerier(cmd string, name string) *CLITraceQuerier {
 }
 
 func (q *CLITraceQuerier) GetTrace() (*Resource, error) {
+	//nolint // trust the user input
 	stdout, err := exec.Command(q.app, q.args...).Output()
 	if err != nil {
 		return nil, err

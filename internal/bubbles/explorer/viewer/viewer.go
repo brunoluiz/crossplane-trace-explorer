@@ -36,6 +36,7 @@ func New() *Model {
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	//nolint // use of switches is recommended
 	switch msg := msg.(type) {
 	case EventSetup:
 		cmd = m.onSetup(msg)
