@@ -108,10 +108,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var treeCmd, statusCmd, viewerCmd tea.Cmd
-	m.tree, treeCmd = m.tree.Update(msg)
-	m.statusbar, statusCmd = m.statusbar.Update(msg)
-	m.viewer, viewerCmd = m.viewer.Update(msg)
+	t, treeCmd := m.tree.Update(msg)
+	s, statusCmd := m.statusbar.Update(msg)
+	v, viewerCmd := m.viewer.Update(msg)
+	m.tree, m.statusbar, m.viewer = t.(*tree.Model), s.(*statusbar.Model), v.(*viewer.Model)
 
 	return m, tea.Batch(treeCmd, statusCmd, viewerCmd)
 }

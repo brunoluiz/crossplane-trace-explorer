@@ -196,7 +196,11 @@ func (m *Model) onNavDown() {
 	m.onSelectionChange(m.nodesByCursor[m.cursor])
 }
 
-func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
+func (m *Model) Init() tea.Cmd {
+	return nil
+}
+
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	//nolint // I prefer switch statements for this
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -211,7 +215,6 @@ func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 			m.Help.ShowAll = !m.Help.ShowAll
 		}
 	}
-
 	return m, nil
 }
 

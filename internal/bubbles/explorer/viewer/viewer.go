@@ -50,7 +50,7 @@ func (m *Model) Setup(v *xplane.Resource) {
 	m.viewer.SetContent(content)
 }
 
-func (m *Model) Update(msg tea.Msg) (_ *Model, cmd tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
 	m.viewer, cmd = m.viewer.Update(msg)
 	return m, cmd
 }

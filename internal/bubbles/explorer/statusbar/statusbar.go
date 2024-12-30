@@ -101,7 +101,7 @@ func (m *Model) SetSize(w int)  { m.statusbar.SetSize(w) }
 func (m *Model) GetHeight() int { return statusbar.Height }
 func (m *Model) View() string   { return m.statusbar.View() }
 
-func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.statusbar.FourthColumn = ""
 	m.statusbar.FourthColumnColors = m.neutralColor
 
