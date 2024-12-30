@@ -3,50 +3,10 @@ package viewer
 import (
 	"fmt"
 
-	"github.com/brunoluiz/crossplane-explorer/internal/tui"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-)
-
-// You generally won't need this unless you're processing stuff with
-// complicated ANSI escape sequences. Turn it on if you notice flickering.
-//
-// Also keep in mind that high performance rendering only works for programs
-// that use the full size of the terminal. We're enabling that below with
-// tea.EnterAltScreen().
-const useHighPerformanceRenderer = false
-
-var (
-	titleStyle = func() lipgloss.Style {
-		return lipgloss.NewStyle().
-			Bold(true).
-			Background(lipgloss.Color(tui.ColorBrightBlack)).
-			Foreground(lipgloss.Color(tui.ColorWhite)).
-			Padding(0, 1, 0, 1).
-			Margin(1, 0, 0, 1)
-	}()
-
-	sideTitleStyle = func() lipgloss.Style {
-		return lipgloss.NewStyle().
-			Bold(true).
-			Background(lipgloss.Color(tui.ColorBlue)).
-			Foreground(lipgloss.Color(tui.ColorWhite)).
-			Padding(0, 1, 0, 1).
-			Margin(1, 0, 0, 1)
-	}()
-
-	viewportStyle = func() lipgloss.Style {
-		return lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder(), true, true, true, true).
-			Margin(0, 1, 0, 1).
-			Padding(0, 1, 0, 1)
-	}
-
-	footerStyle = func() lipgloss.Style {
-		return lipgloss.NewStyle().
-			Padding(0, 1, 0, 1)
-	}()
+	"github.com/charmbracelet/x/ansi"
 )
 
 type Model struct {
@@ -54,15 +14,70 @@ type Model struct {
 	sideTitle string
 	content   string
 
-	cmdQuit tea.Cmd
+	cmdQuit        tea.Cmd
+	titleStyle     lipgloss.Style
+	sideTitleStyle lipgloss.Style
+	viewportStyle  lipgloss.Style
+	footerStyle    lipgloss.Style
+
+	// You generally won't need this unless you're processing stuff with
+	// complicated ANSI escape sequences. Turn it on if you notice flickering.
+	//
+	// Also keep in mind that high performance rendering only works for programs
+	// that use the full size of the terminal. We're enabling that below with
+	// tea.EnterAltScreen().
+	useHighPerformanceRenderer bool
 
 	ready    bool
 	viewport viewport.Model
 }
 
-func (m Model) Init() tea.Cmd {
-	return nil
+type WithOpt func(*Model)
+
+func WithQuitCmd(c tea.Cmd) func(m *Model) {
+	return func(m *Model) {
+		m.cmdQuit = c
+	}
 }
+
+func WithHighPerformanceRenderer(enabled bool) func(m *Model) {
+	return func(m *Model) {
+		m.useHighPerformanceRenderer = enabled
+	}
+}
+
+func New(opts ...WithOpt) Model {
+	m := Model{
+		cmdQuit:                    nil,
+		useHighPerformanceRenderer: false,
+		titleStyle: lipgloss.NewStyle().
+			Bold(true).
+			Background(lipgloss.ANSIColor(ansi.BrightBlack)).
+			Foreground(lipgloss.ANSIColor(ansi.White)).
+			Padding(0, 1, 0, 1).
+			Margin(1, 0, 0, 1),
+		sideTitleStyle: lipgloss.NewStyle().
+			Bold(true).
+			Background(lipgloss.ANSIColor(ansi.Blue)).
+			Foreground(lipgloss.ANSIColor(ansi.White)).
+			Padding(0, 1, 0, 1).
+			Margin(1, 0, 0, 1),
+		viewportStyle: lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder(), true, true, true, true).
+			Margin(0, 1, 0, 1).
+			Padding(0, 1, 0, 1),
+		footerStyle: lipgloss.NewStyle().
+			Padding(0, 1, 0, 1),
+	}
+
+	for _, opt := range opts {
+		opt(&m)
+	}
+
+	return m
+}
+
+func (m Model) Init() tea.Cmd { return nil }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
@@ -88,9 +103,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			// quickly, though asynchronously, which is why we wait for them
 			// here.
 			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			m.viewport.Style = viewportStyle()
+			m.viewport.Style = m.viewportStyle
 			m.viewport.YPosition = headerHeight
-			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
+			m.viewport.HighPerformanceRendering = m.useHighPerformanceRenderer
 			m.viewport.SetContent(m.content)
 			m.ready = true
 
@@ -104,7 +119,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.viewport.Height = msg.Height - verticalMarginHeight
 		}
 
-		if useHighPerformanceRenderer {
+		if m.useHighPerformanceRenderer {
 			// Render (or re-render) the whole viewport. Necessary both to
 			// initialize the viewport and when the window is resized.
 			//
@@ -130,15 +145,15 @@ func (m Model) View() string {
 func (m Model) headerView() string {
 	return lipgloss.JoinHorizontal(
 		lipgloss.Left,
-		titleStyle.Render(m.title),
-		sideTitleStyle.Render(m.sideTitle),
+		m.titleStyle.Render(m.title),
+		m.sideTitleStyle.Render(m.sideTitle),
 	)
 }
 
 func (m Model) footerView() string {
 	return lipgloss.JoinHorizontal(
 		lipgloss.Right,
-		footerStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100)),
+		m.footerStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100)),
 	)
 }
 
@@ -149,9 +164,3 @@ func (m *Model) SetTitle(s string)      { m.title = s }
 func (m *Model) SetSideTitle(s string)  { m.sideTitle = s }
 func (m *Model) SetContent(s string)    { m.content = s; m.viewport.SetContent(s) }
 func (m *Model) SetCmdQuit(cmd tea.Cmd) { m.cmdQuit = cmd }
-
-func New() Model {
-	return Model{
-		cmdQuit: tea.Quit,
-	}
-}

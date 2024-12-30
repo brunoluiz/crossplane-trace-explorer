@@ -1,10 +1,12 @@
 package statusbar
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/mistakenelf/teacup/statusbar"
 )
 
@@ -49,21 +51,25 @@ func WithInitialPath(p []string) func(c *config) {
 	return func(c *config) { c.path = p }
 }
 
-func New(opts ...WithOpt) Model {
+func itoa(c ansi.BasicColor) string {
+	return fmt.Sprintf("%d", c)
+}
+
+func New(opts ...WithOpt) *Model {
 	cfg := &config{
 		path:          []string{},
 		pathSeparator: "\ueab6 ",
 		primaryColor: statusbar.ColorConfig{
-			Foreground: lipgloss.AdaptiveColor{Dark: "#ffffff", Light: "#ffffff"},
-			Background: lipgloss.AdaptiveColor{Light: "#F25D94", Dark: "#F25D94"},
+			Foreground: lipgloss.AdaptiveColor{Dark: itoa(ansi.White), Light: itoa(ansi.White)},
+			Background: lipgloss.AdaptiveColor{Light: itoa(ansi.Magenta), Dark: itoa(ansi.Magenta)},
 		},
 		secondaryColor: statusbar.ColorConfig{
-			Foreground: lipgloss.AdaptiveColor{Light: "#ffffff", Dark: "#ffffff"},
-			Background: lipgloss.AdaptiveColor{Light: "#6124DF", Dark: "#6124DF"},
+			Foreground: lipgloss.AdaptiveColor{Dark: itoa(ansi.Black), Light: itoa(ansi.Black)},
+			Background: lipgloss.AdaptiveColor{Light: itoa(ansi.Blue), Dark: itoa(ansi.Blue)},
 		},
 		neutralColor: statusbar.ColorConfig{
-			Foreground: lipgloss.AdaptiveColor{Light: "#ffffff", Dark: "#ffffff"},
-			Background: lipgloss.AdaptiveColor{Light: "#3c3836", Dark: "#3c3836"},
+			Foreground: lipgloss.AdaptiveColor{Dark: itoa(ansi.White), Light: itoa(ansi.White)},
+			Background: lipgloss.AdaptiveColor{Light: itoa(ansi.BrightBlack), Dark: itoa(ansi.BrightBlack)},
 		},
 	}
 	for _, opt := range opts {
@@ -78,7 +84,8 @@ func New(opts ...WithOpt) Model {
 	)
 	s.FirstColumn = "$"
 	s.SecondColumn = strings.Join(cfg.path, cfg.pathSeparator)
-	return Model{
+
+	return &Model{
 		path:           cfg.path,
 		pathSeparator:  cfg.pathSeparator,
 		rootSymbol:     cfg.rootSymbol,
@@ -94,18 +101,15 @@ func (m *Model) SetSize(w int)  { m.statusbar.SetSize(w) }
 func (m *Model) GetHeight() int { return statusbar.Height }
 func (m *Model) View() string   { return m.statusbar.View() }
 
-func (m *Model) SetPath(path []string) {
-	m.path = path
-	m.statusbar.SecondColumn = strings.Join(m.path, m.pathSeparator)
-}
-
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	m.statusbar.SecondColumn = strings.Join(m.path, m.pathSeparator)
+func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 	m.statusbar.FourthColumn = ""
 	m.statusbar.FourthColumnColors = m.neutralColor
 
 	//nolint // let me use my switches
 	switch msg := msg.(type) {
+	case EventUpdatePath:
+		m.path = msg.Path
+		m.statusbar.SecondColumn = strings.Join(m.path, m.pathSeparator)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "y":
@@ -114,5 +118,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 
+	m.statusbar.Update(msg)
+
 	return m, nil
+}
+
+type EventUpdatePath struct {
+	Path []string
 }

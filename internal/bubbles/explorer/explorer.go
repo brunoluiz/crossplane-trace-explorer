@@ -12,6 +12,7 @@ import (
 	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/samber/lo"
 	k8sv1 "k8s.io/api/core/v1"
@@ -35,9 +36,9 @@ const (
 )
 
 type Model struct {
-	tree      tree.Model
-	statusbar statusbar.Model
-	viewer    viewer.Model
+	tree      *tree.Model
+	statusbar *statusbar.Model
+	viewer    *viewer.Model
 	width     int
 	height    int
 
@@ -45,19 +46,24 @@ type Model struct {
 	resByNode map[*tree.Node]*xplane.Resource
 }
 
-func New() *Model {
+func New(
+	treeModel *tree.Model,
+	viewerModel *viewer.Model,
+	statusbarModel *statusbar.Model,
+) *Model {
+	treeModel.OnSelectionChange = func(n *tree.Node) {
+		statusbarModel.Update(statusbar.EventUpdatePath{
+			Path: n.Path,
+		})
+	}
+
 	return &Model{
-		tree: tree.New([]string{
-			HeaderKeyObject,
-			HeaderKeyGroup,
-			HeaderKeySynced,
-			HeaderKeySyncedLast,
-			HeaderKeyReady,
-			HeaderKeyReadyLast,
-			HeaderKeyMessage,
-		}),
-		statusbar: statusbar.New(),
-		viewer:    viewer.New(),
+		tree:      treeModel,
+		statusbar: statusbarModel,
+		viewer:    viewerModel,
+		width:     0,
+		height:    0,
+
 		pane:      PaneTree,
 		resByNode: map[*tree.Node]*xplane.Resource{},
 	}
@@ -104,7 +110,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var treeCmd, statusCmd, viewerCmd tea.Cmd
 	m.tree, treeCmd = m.tree.Update(msg)
-	m.statusbar.SetPath(m.tree.Path())
 	m.statusbar, statusCmd = m.statusbar.Update(msg)
 	m.viewer, viewerCmd = m.viewer.Update(msg)
 
@@ -148,11 +153,11 @@ func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane
 
 	if v.Unstructured.GetAnnotations()["crossplane.io/paused"] == "true" {
 		n.Key += " (paused)"
-		n.Unselected = tree.ColorConfig{Foreground: tui.ColorWarn}
+		n.Unselected = tree.ColorConfig{Foreground: lipgloss.ANSIColor(ansi.Yellow)}
 	}
 
 	if synced.Status == k8sv1.ConditionFalse || ready.Status == k8sv1.ConditionFalse {
-		n.Unselected = tree.ColorConfig{Foreground: tui.ColorAlert}
+		n.Unselected = tree.ColorConfig{Foreground: lipgloss.ANSIColor(ansi.Red)}
 	}
 
 	n.Details = map[string]string{

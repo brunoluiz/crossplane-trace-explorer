@@ -39,8 +39,8 @@ type State struct {
 }
 
 type ColorConfig struct {
-	Foreground lipgloss.Color
-	Background lipgloss.Color
+	Foreground lipgloss.ANSIColor
+	Background lipgloss.ANSIColor
 }
 
 type Node struct {
@@ -52,7 +52,7 @@ type Node struct {
 	Unselected ColorConfig
 
 	Children []*Node
-	path     []string
+	Path     []string
 }
 
 type Model struct {
@@ -73,8 +73,8 @@ type Model struct {
 	showHelp bool
 }
 
-func New(headers []string) Model {
-	return Model{
+func New(headers []string) *Model {
+	return &Model{
 		KeyMap: KeyMap{
 			Bottom: key.NewBinding(
 				key.WithKeys("bottom"),
@@ -143,7 +143,7 @@ func (m Model) Cursor() int    { return m.cursor }
 func (m Model) Current() *Node { return m.nodesByCursor[m.cursor] }
 func (m Model) Path() []string {
 	if m.nodesByCursor != nil && m.nodesByCursor[m.cursor] != nil {
-		return m.nodesByCursor[m.cursor].path
+		return m.nodesByCursor[m.cursor].Path
 	}
 	return []string{}
 }
@@ -182,25 +182,21 @@ func (m *Model) numberOfNodes() int {
 
 func (m *Model) onNavUp() {
 	m.cursor--
-	m.onSelectionChange(m.nodesByCursor[m.cursor])
-
 	if m.cursor < 0 {
 		m.cursor = 0
-		return
 	}
+	m.onSelectionChange(m.nodesByCursor[m.cursor])
 }
 
 func (m *Model) onNavDown() {
 	m.cursor++
-	m.onSelectionChange(m.nodesByCursor[m.cursor])
-
 	if m.cursor >= m.numberOfNodes() {
 		m.cursor = m.numberOfNodes() - 1
-		return
 	}
+	m.onSelectionChange(m.nodesByCursor[m.cursor])
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (*Model, tea.Cmd) {
 	//nolint // I prefer switch statements for this
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -265,14 +261,14 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []*Node, path []string
 		// Format the string with fixed width for the value and description fields
 		valueStr := ""
 		unselectedStyle := lipgloss.NewStyle().Inherit(m.Styles.Unselected)
-		if node.Unselected.Foreground != "" {
+		if node.Unselected.Foreground != 0 {
 			unselectedStyle = unselectedStyle.Foreground(node.Unselected.Foreground)
 		}
 
 		// If we are at the cursor, we add the selected style to the string
 		if m.cursor == idx {
 			s := lipgloss.NewStyle().Inherit(m.Styles.Selected)
-			if node.Selected.Background != "" {
+			if node.Selected.Background != 0 {
 				s = s.Foreground(node.Selected.Foreground).Background(node.Selected.Background)
 			}
 			valueStr = s.Render(node.Key)
@@ -288,11 +284,11 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []*Node, path []string
 		m.nodesByCursor[idx] = node
 
 		// Used to be able to trace back the path on the tree
-		node.path = path
-		node.path = append(node.path, node.Key)
+		node.Path = path
+		node.Path = append(node.Path, node.Key)
 
 		if node.Children != nil {
-			m.renderTree(t, node.Children, node.path, indent+1, count)
+			m.renderTree(t, node.Children, node.Path, indent+1, count)
 		}
 	}
 }

@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer"
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/statusbar"
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/viewer"
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/tree"
 	"github.com/brunoluiz/crossplane-explorer/internal/tasker"
 	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
@@ -54,7 +57,19 @@ func cmdTrace() *cli.Command {
 
 			eg, egCtx := errgroup.WithContext(ctx)
 			app := tea.NewProgram(
-				explorer.New(),
+				explorer.New(
+					tree.New([]string{
+						explorer.HeaderKeyObject,
+						explorer.HeaderKeyGroup,
+						explorer.HeaderKeySynced,
+						explorer.HeaderKeySyncedLast,
+						explorer.HeaderKeyReady,
+						explorer.HeaderKeyReadyLast,
+						explorer.HeaderKeyMessage,
+					}),
+					viewer.New(),
+					statusbar.New(),
+				),
 				tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 				tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
 				tea.WithContext(egCtx),
