@@ -93,7 +93,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Interrupt
 		case "q", "esc":
 			if m.pane == PaneTree {
-				return m, tea.Quit
+				return m, tea.Interrupt
 			} else {
 				m.pane = PaneTree
 			}
