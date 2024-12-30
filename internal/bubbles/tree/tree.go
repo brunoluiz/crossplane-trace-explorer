@@ -136,24 +136,82 @@ func New(headers []string) *Model {
 	}
 }
 
-func (m Model) Nodes() []*Node { return m.nodes }
-func (m Model) Width() int     { return m.width }
-func (m Model) Height() int    { return m.height }
-func (m Model) Cursor() int    { return m.cursor }
-func (m Model) Current() *Node { return m.nodesByCursor[m.cursor] }
-func (m Model) Path() []string {
-	if m.nodesByCursor != nil && m.nodesByCursor[m.cursor] != nil {
-		return m.nodesByCursor[m.cursor].Path
-	}
-	return []string{}
+func (m *Model) Init() tea.Cmd {
+	return nil
 }
 
-func (m *Model) SetNodes(nodes []*Node)    { m.nodes = nodes }
-func (m *Model) SetSize(width, height int) { m.width = width; m.height = height }
-func (m *Model) SetWidth(newWidth int)     { m.SetSize(newWidth, m.height) }
-func (m *Model) SetHeight(newHeight int)   { m.SetSize(m.width, newHeight) }
-func (m *Model) SetCursor(cursor int)      { m.cursor = cursor }
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case EventUpdateNodes:
+		cmd = m.onNodesUpdate(msg)
+	case tea.WindowSizeMsg:
+		cmd = m.onResize(msg)
+	case tea.KeyMsg:
+		cmd = m.onKey(msg)
+	}
+
+	return m, cmd
+}
+
+func (m Model) View() string {
+	availableHeight := m.height
+	nodes := m.nodes
+
+	var help string
+	if m.showHelp {
+		help = m.helpView()
+		availableHeight -= lipgloss.Height(help)
+	}
+
+	t := table.New().
+		Border(lipgloss.HiddenBorder()).
+		BorderTop(false).
+		BorderHeader(true).
+		StyleFunc(func(_, _ int) lipgloss.Style {
+			return lipgloss.NewStyle().PaddingRight(2)
+		}).
+		Headers(m.headers...)
+
+	count := 0 // This is used to keep track of the index of the node we are on (important because we are using a recursive function)
+	m.renderTree(t, m.nodes, []string{}, 0, &count)
+
+	if len(nodes) == 0 {
+		return "No data"
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, lipgloss.NewStyle().Height(availableHeight).Render(t.Render()), help)
+}
+
+func (m Model) ShortHelp() []key.Binding {
+	kb := []key.Binding{
+		m.KeyMap.Up,
+		m.KeyMap.Down,
+		m.KeyMap.Yank,
+	}
+
+	return append(kb,
+		m.KeyMap.Quit,
+	)
+}
+
+func (m Model) FullHelp() [][]key.Binding {
+	kb := [][]key.Binding{{
+		m.KeyMap.Up,
+		m.KeyMap.Down,
+		m.KeyMap.Yank,
+	}}
+
+	return append(kb,
+		[]key.Binding{
+			m.KeyMap.Quit,
+			m.KeyMap.CloseFullHelp,
+		})
+}
+
+func (m Model) Current() *Node             { return m.nodesByCursor[m.cursor] }
 func (m *Model) SetShowHelp() bool         { return m.showHelp }
+func (m *Model) setSize(width, height int) { m.width = width; m.height = height }
 
 func (m *Model) onSelectionChange(node *Node) {
 	if m.OnSelectionChange == nil {
@@ -194,57 +252,6 @@ func (m *Model) onNavDown() {
 		m.cursor = m.numberOfNodes() - 1
 	}
 	m.onSelectionChange(m.nodesByCursor[m.cursor])
-}
-
-func (m *Model) Init() tea.Cmd {
-	return nil
-}
-
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	//nolint // I prefer switch statements for this
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.KeyMap.Up):
-			m.onNavUp()
-		case key.Matches(msg, m.KeyMap.Down):
-			m.onNavDown()
-		case key.Matches(msg, m.KeyMap.ShowFullHelp):
-			fallthrough
-		case key.Matches(msg, m.KeyMap.CloseFullHelp):
-			m.Help.ShowAll = !m.Help.ShowAll
-		}
-	}
-	return m, nil
-}
-
-func (m Model) View() string {
-	availableHeight := m.height
-	nodes := m.Nodes()
-
-	var help string
-	if m.showHelp {
-		help = m.helpView()
-		availableHeight -= lipgloss.Height(help)
-	}
-
-	t := table.New().
-		Border(lipgloss.HiddenBorder()).
-		BorderTop(false).
-		BorderHeader(true).
-		StyleFunc(func(_, _ int) lipgloss.Style {
-			return lipgloss.NewStyle().PaddingRight(2)
-		}).
-		Headers(m.headers...)
-
-	count := 0 // This is used to keep track of the index of the node we are on (important because we are using a recursive function)
-	m.renderTree(t, m.nodes, []string{}, 0, &count)
-
-	if len(nodes) == 0 {
-		return "No data"
-	}
-
-	return lipgloss.JoinVertical(lipgloss.Left, lipgloss.NewStyle().Height(availableHeight).Render(t.Render()), help)
 }
 
 func (m *Model) renderTree(t *table.Table, remainingNodes []*Node, path []string, indent int, count *int) {
@@ -298,30 +305,4 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []*Node, path []string
 
 func (m Model) helpView() string {
 	return m.Styles.Help.Render(m.Help.View(m))
-}
-
-func (m Model) ShortHelp() []key.Binding {
-	kb := []key.Binding{
-		m.KeyMap.Up,
-		m.KeyMap.Down,
-		m.KeyMap.Yank,
-	}
-
-	return append(kb,
-		m.KeyMap.Quit,
-	)
-}
-
-func (m Model) FullHelp() [][]key.Binding {
-	kb := [][]key.Binding{{
-		m.KeyMap.Up,
-		m.KeyMap.Down,
-		m.KeyMap.Yank,
-	}}
-
-	return append(kb,
-		[]key.Binding{
-			m.KeyMap.Quit,
-			m.KeyMap.CloseFullHelp,
-		})
 }

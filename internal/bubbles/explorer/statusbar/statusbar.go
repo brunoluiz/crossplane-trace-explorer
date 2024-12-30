@@ -96,33 +96,27 @@ func New(opts ...WithOpt) *Model {
 	}
 }
 
-func (m Model) Init() tea.Cmd   { return nil }
-func (m *Model) SetSize(w int)  { m.statusbar.SetSize(w) }
-func (m *Model) GetHeight() int { return statusbar.Height }
-func (m *Model) View() string   { return m.statusbar.View() }
+func (m Model) Init() tea.Cmd { return nil }
+func (m *Model) View() string { return m.statusbar.View() }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.statusbar.FourthColumn = ""
 	m.statusbar.FourthColumnColors = m.neutralColor
 
-	//nolint // let me use my switches
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		cmd = m.onResize(msg)
 	case EventUpdatePath:
-		m.path = msg.Path
-		m.statusbar.SecondColumn = strings.Join(m.path, m.pathSeparator)
+		cmd = m.onPathUpdate(msg)
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "y":
-			m.statusbar.FourthColumn = "yanked"
-			m.statusbar.FourthColumnColors = m.secondaryColor
-		}
+		cmd = m.onKey(msg)
 	}
 
-	m.statusbar.Update(msg)
+	var statusbarCmd tea.Cmd
+	m.statusbar, statusbarCmd = m.statusbar.Update(msg)
 
-	return m, nil
+	return m, tea.Batch(cmd, statusbarCmd)
 }
 
-type EventUpdatePath struct {
-	Path []string
-}
+func (m *Model) GetHeight() int { return statusbar.Height }

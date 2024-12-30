@@ -10,7 +10,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/mistakenelf/teacup/statusbar"
 	"github.com/samber/lo"
 	k8sv1 "k8s.io/api/core/v1"
 )
@@ -36,28 +35,21 @@ func New() *Model {
 	}
 }
 
-func (m *Model) Setup(v *xplane.Resource) {
-	m.viewer.SetTitle(fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName()))
-	m.viewer.SetSideTitle(v.Unstructured.GetAPIVersion())
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case *xplane.Resource:
+		cmd = m.onSetup(msg)
+	}
 
-	content := m.mainStyle.Render(lipgloss.JoinVertical(
-		lipgloss.Top,
-		m.renderHealth("synced", v.GetCondition(xpv1.TypeSynced)),
-		m.renderHealth("ready", v.GetCondition(xpv1.TypeReady)),
-		m.renderMetadata(v.Unstructured.GetAnnotations()),
-	))
-
-	m.viewer.SetContent(content)
-}
-
-func (m *Model) Update(msg tea.Msg) (_ tea.Model, cmd tea.Cmd) {
+	var viewerCmd tea.Cmd
 	m.viewer, cmd = m.viewer.Update(msg)
-	return m, cmd
+
+	return m, tea.Batch(cmd, viewerCmd)
 }
 
-func (m *Model) GetHeight() int { return statusbar.Height }
-func (m Model) Init() tea.Cmd   { return nil }
-func (m Model) View() string    { return m.viewer.View() }
+func (m Model) Init() tea.Cmd { return nil }
+func (m Model) View() string  { return m.viewer.View() }
 
 func (m Model) renderHealth(name string, c xpv1.Condition) string {
 	info := []string{}

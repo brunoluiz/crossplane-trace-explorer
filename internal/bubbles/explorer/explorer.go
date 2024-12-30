@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/atotto/clipboard"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/statusbar"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/viewer"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/tree"
@@ -74,38 +73,14 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case *xplane.Resource:
-		m.Load(msg)
+		cmd = m.onLoad(msg)
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.statusbar.SetSize(m.width)
-		m.viewer.Update(msg)
-
-		top, right, _, left := lipgloss.NewStyle().Padding(1).GetPadding()
-		m.tree.SetSize(m.width-right-left, m.height-top)
-		return m, nil
+		cmd = m.onResize(msg)
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "y":
-			clipboard.WriteAll(m.tree.Current().Value)
-		case "enter":
-			v := m.resByNode[m.tree.Current()]
-
-			m.viewer.Setup(v)
-			m.pane = PaneSummary
-		case "ctrl+c", "ctlr+d":
-			return m, tea.Interrupt
-		case "q", "esc":
-			if m.pane == PaneTree {
-				return m, tea.Interrupt
-			} else {
-				m.pane = PaneTree
-			}
-		case "?":
-			return m, nil
-		}
+		cmd = m.onKey(msg)
 	}
 
 	t, treeCmd := m.tree.Update(msg)
@@ -113,7 +88,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	v, viewerCmd := m.viewer.Update(msg)
 	m.tree, m.statusbar, m.viewer = t.(*tree.Model), s.(*statusbar.Model), v.(*viewer.Model)
 
-	return m, tea.Batch(treeCmd, statusCmd, viewerCmd)
+	return m, tea.Batch(cmd, treeCmd, statusCmd, viewerCmd)
 }
 
 func (m Model) View() string {
@@ -129,17 +104,6 @@ func (m Model) View() string {
 	default:
 		return "No pane selected"
 	}
-}
-
-func (m *Model) Load(data *xplane.Resource) {
-	nodes := []*tree.Node{
-		{Key: "root", Children: make([]*tree.Node, 1)},
-	}
-	resByNode := map[*tree.Node]*xplane.Resource{}
-	addNodes(data, nodes[0], resByNode)
-
-	m.tree.SetNodes(nodes)
-	m.resByNode = resByNode
 }
 
 func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane.Resource) {

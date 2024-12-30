@@ -86,46 +86,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
+	case EventSetup:
+		return m, m.onSetup(msg)
 	case tea.KeyMsg:
-		if k := msg.String(); k == "ctrl+c" || k == "q" || k == "esc" {
-			return m, m.cmdQuit
-		}
-
+		return m, m.onKey(msg)
 	case tea.WindowSizeMsg:
-		headerHeight := lipgloss.Height(m.headerView())
-		footerHeight := lipgloss.Height(m.footerView())
-		verticalMarginHeight := headerHeight + footerHeight
-
-		if !m.ready {
-			// Since this program is using the full size of the viewport we
-			// need to wait until we've received the window dimensions before
-			// we can initialize the viewport. The initial dimensions come in
-			// quickly, though asynchronously, which is why we wait for them
-			// here.
-			m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			m.viewport.Style = m.viewportStyle
-			m.viewport.YPosition = headerHeight
-			m.viewport.HighPerformanceRendering = m.useHighPerformanceRenderer
-			m.viewport.SetContent(m.content)
-			m.ready = true
-
-			// This is only necessary for high performance rendering, which in
-			// most cases you won't need.
-			//
-			// Render the viewport one line below the header.
-			m.viewport.YPosition = headerHeight + 1
-		} else {
-			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - verticalMarginHeight
-		}
-
-		if m.useHighPerformanceRenderer {
-			// Render (or re-render) the whole viewport. Necessary both to
-			// initialize the viewport and when the window is resized.
-			//
-			// This is needed for high-performance rendering only.
-			cmds = append(cmds, viewport.Sync(m.viewport))
-		}
+		cmds = append(cmds, m.onResize(msg))
 	}
 
 	// Handle keyboard and mouse events in the viewport
@@ -156,11 +122,3 @@ func (m Model) footerView() string {
 		m.footerStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100)),
 	)
 }
-
-func (m Model) GetHeight() int { return m.viewport.Height }
-func (m Model) GetWidth() int  { return m.viewport.Width }
-
-func (m *Model) SetTitle(s string)      { m.title = s }
-func (m *Model) SetSideTitle(s string)  { m.sideTitle = s }
-func (m *Model) SetContent(s string)    { m.content = s; m.viewport.SetContent(s) }
-func (m *Model) SetCmdQuit(cmd tea.Cmd) { m.cmdQuit = cmd }
