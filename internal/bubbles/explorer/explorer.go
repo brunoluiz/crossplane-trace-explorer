@@ -71,6 +71,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = m.onLoad(msg)
 	case tea.WindowSizeMsg:
 		cmd = m.onResize(msg)
+		return m, nil
 	case tea.KeyMsg:
 		cmd = m.onKey(msg)
 	}

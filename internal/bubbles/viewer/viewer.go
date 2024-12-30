@@ -87,9 +87,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case EventSetup:
-		return m, m.onSetup(msg)
+		cmds = append(cmds, m.onSetup(msg))
 	case tea.KeyMsg:
-		return m, m.onKey(msg)
+		cmds = append(cmds, m.onKey(msg))
 	case tea.WindowSizeMsg:
 		cmds = append(cmds, m.onResize(msg))
 	}

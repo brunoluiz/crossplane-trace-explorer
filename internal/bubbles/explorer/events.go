@@ -49,7 +49,7 @@ func (m *Model) onKey(msg tea.KeyMsg) tea.Cmd {
 	case "y":
 		//nolint // ignore errors
 		clipboard.WriteAll(m.tree.Current().Value)
-	case "enter":
+	case "enter", "d":
 		v := m.resByNode[m.tree.Current()]
 
 		m.viewer.Update(viewer.EventSetup{Trace: v})

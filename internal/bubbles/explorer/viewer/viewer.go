@@ -43,7 +43,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	var viewerCmd tea.Cmd
-	m.viewer, cmd = m.viewer.Update(msg)
+	m.viewer, viewerCmd = m.viewer.Update(msg)
 
 	return m, tea.Batch(cmd, viewerCmd)
 }
