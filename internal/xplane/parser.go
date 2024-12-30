@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// Parse a stream into a crossplane resource (usually from stdin or os.Exec)
 func Parse(r io.Reader) (*Resource, error) {
 	input, err := io.ReadAll(r)
 	if err != nil {

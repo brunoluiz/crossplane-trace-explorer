@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+// Resource resource trace model, extracted from crossplane CLI codebase
 type Resource struct {
 	Unstructured unstructured.Unstructured `json:"object"`
 	Error        error                     `json:"error,omitempty"`
@@ -32,6 +33,7 @@ func (r *Resource) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
 	return xpv1.Condition{}
 }
 
+// GetUnhealthyStatus of both ready and synced. These are formatted messages with their reasons.
 func (r *Resource) GetUnhealthyStatus() []string {
 	out := []string{}
 
