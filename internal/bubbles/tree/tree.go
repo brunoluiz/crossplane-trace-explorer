@@ -22,6 +22,7 @@ type KeyMap struct {
 	Quit        key.Binding
 
 	Yank          key.Binding
+	Describe      key.Binding
 	ShowFullHelp  key.Binding
 	CloseFullHelp key.Binding
 }
@@ -104,6 +105,10 @@ func New(headers []string) *Model {
 			Yank: key.NewBinding(
 				key.WithKeys("y"),
 				key.WithHelp("y", "yank"),
+			),
+			Describe: key.NewBinding(
+				key.WithKeys("enter", "d"),
+				key.WithHelp("enter/d", "describe"),
 			),
 			ShowFullHelp: key.NewBinding(
 				key.WithKeys("?"),
@@ -188,6 +193,7 @@ func (m Model) ShortHelp() []key.Binding {
 		m.KeyMap.Up,
 		m.KeyMap.Down,
 		m.KeyMap.Yank,
+		m.KeyMap.Describe,
 	}
 
 	return append(kb,
@@ -200,6 +206,7 @@ func (m Model) FullHelp() [][]key.Binding {
 		m.KeyMap.Up,
 		m.KeyMap.Down,
 		m.KeyMap.Yank,
+		m.KeyMap.Describe,
 	}}
 
 	return append(kb,
