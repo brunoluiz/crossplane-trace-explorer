@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/viewer"
-	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
@@ -38,7 +37,7 @@ func New() *Model {
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case *xplane.Resource:
+	case EventSetup:
 		cmd = m.onSetup(msg)
 	}
 

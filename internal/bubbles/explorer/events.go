@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/viewer"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/tree"
 	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
@@ -50,7 +51,7 @@ func (m *Model) onKey(msg tea.KeyMsg) tea.Cmd {
 	case "enter":
 		v := m.resByNode[m.tree.Current()]
 
-		m.viewer.Update(v)
+		m.viewer.Update(viewer.EventSetup{Trace: v})
 		m.pane = PaneSummary
 	case "q", "esc":
 		if m.pane == PaneTree {
