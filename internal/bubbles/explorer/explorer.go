@@ -90,7 +90,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewer.Setup(v)
 			m.pane = PaneSummary
 		case "ctrl+c", "ctlr+d":
-			return m, tea.Quit
+			return m, tea.Interrupt
 		case "q", "esc":
 			if m.pane == PaneTree {
 				return m, tea.Quit

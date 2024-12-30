@@ -62,7 +62,6 @@ func cmdTrace() *cli.Command {
 
 			eg.Go(func() error {
 				_, err := app.Run()
-				stop()
 				return err
 			})
 
