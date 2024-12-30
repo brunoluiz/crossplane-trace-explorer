@@ -58,8 +58,8 @@ func New(opts ...WithOpt) Model {
 			Margin(1, 0, 0, 1),
 		sideTitleStyle: lipgloss.NewStyle().
 			Bold(true).
-			Background(lipgloss.ANSIColor(ansi.Blue)).
-			Foreground(lipgloss.ANSIColor(ansi.White)).
+			Background(lipgloss.ANSIColor(ansi.Green)).
+			Foreground(lipgloss.ANSIColor(ansi.Black)).
 			Padding(0, 1, 0, 1).
 			Margin(1, 0, 0, 1),
 		viewportStyle: lipgloss.NewStyle().
