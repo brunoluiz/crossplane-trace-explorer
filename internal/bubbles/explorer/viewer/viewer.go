@@ -2,9 +2,9 @@ package viewer
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/viewer"
-	"github.com/brunoluiz/crossplane-explorer/internal/tui"
 	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -69,7 +69,7 @@ func (m Model) renderHealth(name string, c xpv1.Condition) string {
 		info = append(info, m.identedStyle.Render(fmt.Sprintf("Message: %s", c.Message)))
 	}
 
-	info = append(info, m.identedStyle.Render(fmt.Sprintf("Last Transition Time: %s", c.LastTransitionTime.Format(tui.DateFormat))))
+	info = append(info, m.identedStyle.Render(fmt.Sprintf("Last Transition Time: %s", c.LastTransitionTime.Format(time.RFC822))))
 	return lipgloss.JoinVertical(lipgloss.Top, info...)
 }
 

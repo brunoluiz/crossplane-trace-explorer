@@ -3,10 +3,10 @@ package explorer
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/tree"
-	"github.com/brunoluiz/crossplane-explorer/internal/tui"
 	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -84,9 +84,9 @@ func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane
 	n.Details = map[string]string{
 		HeaderKeyGroup:      group,
 		HeaderKeySynced:     string(synced.Status),
-		HeaderKeySyncedLast: synced.LastTransitionTime.Format(tui.DateFormat),
+		HeaderKeySyncedLast: synced.LastTransitionTime.Format(time.RFC822),
 		HeaderKeyReady:      string(ready.Status),
-		HeaderKeyReadyLast:  ready.LastTransitionTime.Format(tui.DateFormat),
+		HeaderKeyReadyLast:  ready.LastTransitionTime.Format(time.RFC822),
 		HeaderKeyMessage:    lo.Elipse(strings.Join(v.GetUnhealthyStatus(), ", "), 96),
 	}
 
