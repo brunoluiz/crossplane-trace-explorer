@@ -1,14 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"io"
 	"os"
-	"os/exec"
-	"os/signal"
-	"strings"
-	"syscall"
 	"time"
 
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer"
@@ -24,37 +18,20 @@ import (
 
 func cmdTrace() *cli.Command {
 	return &cli.Command{
-		Usage:   "Explore tracing from Crossplane. Pipe the `crossplane beta trace -o json <>` output to open the trace view.",
+		Usage: `Explore tracing from Crossplane. Usage is available through arguments or data stream
+1. To load it straight from a live resource using the crossplane CLI, do 'crossplane-explorer trace <object name>'
+2. To load it from a trace JSON file, do 'crossplane beta trace -o json <> | crossplane-explorer trace --stdin'
+
+Live mode is only available for (1) through the use of --watch / --watch-interval (see flag usage below)`,
 		Name:    "trace",
 		Aliases: []string{"t"},
 		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "cmd",
-				Usage: "Which binary should it use to generate the JSON trace",
-				Value: "crossplane beta trace -o json",
-			},
-			&cli.StringFlag{
-				Name:  "name",
-				Usage: "Object name to trace",
-			},
-			&cli.BoolFlag{
-				Name:  "stdin",
-				Usage: "Specify in case file is piped into stdin",
-			},
-			&cli.BoolFlag{
-				Name:  "watch",
-				Usage: "Refresh trace every 10 seconds",
-			},
-			&cli.DurationFlag{
-				Name:  "watch-interval",
-				Usage: "Refresh interval for the watcher feature",
-				Value: 5 * time.Second,
-			},
+			&cli.StringFlag{Name: "cmd", Usage: "Which binary should it use to generate the JSON trace", Value: "crossplane beta trace -o json"},
+			&cli.BoolFlag{Name: "stdin", Aliases: []string{"in"}, Usage: "Specify in case file is piped into stdin"},
+			&cli.BoolFlag{Name: "watch", Aliases: []string{"w"}, Usage: "Refresh trace every 10 seconds"},
+			&cli.DurationFlag{Name: "watch-interval", Aliases: []string{"wi"}, Usage: "Refresh interval for the watcher feature", Value: 5 * time.Second},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt)
-			defer stop()
-
 			eg, egCtx := errgroup.WithContext(ctx)
 			app := tea.NewProgram(
 				explorer.New(
@@ -70,8 +47,8 @@ func cmdTrace() *cli.Command {
 					viewer.New(),
 					statusbar.New(),
 				),
-				tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
-				tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
+				tea.WithAltScreen(),
+				tea.WithMouseCellMotion(),
 				tea.WithContext(egCtx),
 			)
 
@@ -81,18 +58,14 @@ func cmdTrace() *cli.Command {
 			})
 
 			eg.Go(func() error {
-				cb := func() error {
-					r, err := execCrossplane(c.String("cmd"), c.String("name"))
-					if err != nil {
-						return err
-					}
-
-					app.Send(xplane.MustParse(r))
+				if c.Bool("stdin") {
+					app.Send(xplane.NewReaderTraceQuerier(os.Stdin).MustGetTrace())
 					return nil
 				}
 
-				if c.Bool("stdin") {
-					app.Send(xplane.MustParse(os.Stdin))
+				q := xplane.NewCLITraceQuerier(c.String("cmd"), c.Args().First())
+				cb := func() error {
+					app.Send(q.MustGetTrace())
 					return nil
 				}
 
@@ -102,21 +75,7 @@ func cmdTrace() *cli.Command {
 
 				return tasker.Periodic(egCtx, c.Duration("watch-interval"), cb)
 			})
-
 			return eg.Wait()
 		},
 	}
-}
-
-func execCrossplane(cmd string, name string) (io.Reader, error) {
-	s := strings.Split(cmd, " ")
-	app := s[0]
-	args := append(s[1:], name)
-
-	stdout, err := exec.Command(app, args...).Output()
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(stdout), nil
 }
