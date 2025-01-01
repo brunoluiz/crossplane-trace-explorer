@@ -4,9 +4,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/table"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/table"
+
+	// "github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
@@ -72,15 +75,25 @@ type Model struct {
 	showHelp bool
 }
 
+const (
+	HeaderKeyObject     = "OBJECT"
+	HeaderKeyGroup      = "GROUP"
+	HeaderKeySynced     = "SYNCED"
+	HeaderKeySyncedLast = "SYNCED LAST"
+	HeaderKeyReady      = "READY"
+	HeaderKeyReadyLast  = "READY LAST"
+	HeaderKeyMessage    = "MESSAGE"
+)
+
 func New(headers []string) *Model {
 	t := table.New(table.WithColumns([]table.Column{
-		{Title: "OBJECT", Width: 50},
-		{Title: "GROUP", Width: 30},
-		{Title: "SYNCED", Width: 10},
-		{Title: "SYNC LAST AT", Width: 25},
-		{Title: "READY", Width: 10},
-		{Title: "READY LAST AT", Width: 25},
-		{Title: "MESSAGE", Width: 50},
+		{Title: HeaderKeyObject, Width: 60},
+		{Title: HeaderKeyGroup, Width: 30},
+		{Title: HeaderKeySynced, Width: 10},
+		{Title: HeaderKeySyncedLast, Width: 25},
+		{Title: HeaderKeyReady, Width: 10},
+		{Title: HeaderKeyReadyLast, Width: 25},
+		{Title: HeaderKeyMessage, Width: 50},
 	}),
 		table.WithFocused(true),
 		table.WithStyles(func() table.Styles {
@@ -255,13 +268,12 @@ func (m *Model) renderTree(rows *[]table.Row, remainingNodes []*Node, path []str
 
 		s := lipgloss.NewStyle()
 		if m.cursor != idx {
-			// FIXME: this is not working due to some truncation on the table package
-			// s = s.Foreground(node.Color)
+			s = s.Foreground(node.Color)
 		}
 
-		cols := []string{s.Render(shape + node.Key)}
-		for _, v := range m.headers[1:] {
-			cols = append(cols, s.Render(node.Details[v]))
+		cols := []table.Cell{{Value: shape + node.Key, Style: s}}
+		for _, v := range m.table.Columns()[1:] {
+			cols = append(cols, table.Cell{Value: node.Details[v.Title], Style: s})
 		}
 
 		*rows = append(*rows, cols)

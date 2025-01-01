@@ -1,8 +1,9 @@
 package tree
 
 import (
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/table"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/table"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
