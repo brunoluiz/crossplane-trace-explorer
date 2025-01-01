@@ -1,15 +1,16 @@
 package tree
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/table"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 )
 
 type KeyMap struct {
@@ -28,10 +29,7 @@ type KeyMap struct {
 }
 
 type Styles struct {
-	Shapes     lipgloss.Style
-	Selected   lipgloss.Style
-	Unselected lipgloss.Style
-	Help       lipgloss.Style
+	Help lipgloss.Style
 }
 
 type State struct {
@@ -49,8 +47,8 @@ type Node struct {
 	Value   string
 	Details map[string]string
 
-	Selected   ColorConfig
-	Unselected ColorConfig
+	Selected ColorConfig
+	Color    lipgloss.TerminalColor
 
 	Children []*Node
 	Path     []string
@@ -60,6 +58,7 @@ type Model struct {
 	KeyMap KeyMap
 	Styles Styles
 	Help   help.Model
+	table  table.Model
 
 	OnSelectionChange func(node *Node)
 	OnYank            func(node *Node)
@@ -69,13 +68,13 @@ type Model struct {
 	nodes         []*Node
 	nodesByCursor map[int]*Node
 	cursor        int
-	headers       []string
 
 	showHelp bool
 }
 
-func New(headers []string) *Model {
+func New(t table.Model) *Model {
 	return &Model{
+		table: t,
 		KeyMap: KeyMap{
 			Bottom: key.NewBinding(
 				key.WithKeys("bottom"),
@@ -125,16 +124,12 @@ func New(headers []string) *Model {
 			),
 		},
 		Styles: Styles{
-			Shapes:     lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.Color("#999")),
-			Selected:   lipgloss.NewStyle().Margin(0, 0, 0, 0).Background(lipgloss.AdaptiveColor{Light: "#333", Dark: "#eee"}).Foreground(lipgloss.AdaptiveColor{Light: "#eee", Dark: "#333"}),
-			Unselected: lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.AdaptiveColor{Light: "#333", Dark: "#eee"}),
-			Help:       lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.AdaptiveColor{Light: "#333", Dark: "#eee"}),
+			Help: lipgloss.NewStyle().Margin(0, 0, 0, 0).Foreground(lipgloss.AdaptiveColor{Light: "#333", Dark: "#eee"}),
 		},
 
 		width:         0,
 		height:        0,
 		nodesByCursor: map[int]*Node{},
-		headers:       headers,
 
 		showHelp: true,
 		Help:     help.New(),
@@ -156,36 +151,22 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = m.onKey(msg)
 	}
 
-	return m, cmd
+	var tableCmd tea.Cmd
+	m.table, tableCmd = m.table.Update(msg)
+
+	return m, tea.Batch(cmd, tableCmd)
 }
 
 func (m Model) View() string {
 	availableHeight := m.height
-	nodes := m.nodes
 
 	var help string
 	if m.showHelp {
 		help = m.helpView()
 		availableHeight -= lipgloss.Height(help)
 	}
-
-	t := table.New().
-		Border(lipgloss.HiddenBorder()).
-		BorderTop(false).
-		BorderHeader(true).
-		StyleFunc(func(_, _ int) lipgloss.Style {
-			return lipgloss.NewStyle().PaddingRight(2)
-		}).
-		Headers(m.headers...)
-
-	count := 0 // This is used to keep track of the index of the node we are on (important because we are using a recursive function)
-	m.renderTree(t, m.nodes, []string{}, 0, &count)
-
-	if len(nodes) == 0 {
-		return "No data"
-	}
-
-	return lipgloss.JoinVertical(lipgloss.Left, lipgloss.NewStyle().Height(availableHeight).Render(t.Render()), help)
+	m.table.SetHeight(availableHeight)
+	return lipgloss.JoinVertical(lipgloss.Left, m.table.View(), help)
 }
 
 func (m Model) ShortHelp() []key.Binding {
@@ -220,13 +201,6 @@ func (m Model) Current() *Node             { return m.nodesByCursor[m.cursor] }
 func (m *Model) SetShowHelp() bool         { return m.showHelp }
 func (m *Model) setSize(width, height int) { m.width = width; m.height = height }
 
-func (m *Model) onSelectionChange(node *Node) {
-	if m.OnSelectionChange == nil {
-		return
-	}
-	m.OnSelectionChange(node)
-}
-
 func (m *Model) numberOfNodes() int {
 	count := 0
 
@@ -245,59 +219,31 @@ func (m *Model) numberOfNodes() int {
 	return count
 }
 
-func (m *Model) onNavUp() {
-	m.cursor--
-	if m.cursor < 0 {
-		m.cursor = 0
-	}
-	m.onSelectionChange(m.nodesByCursor[m.cursor])
-}
-
-func (m *Model) onNavDown() {
-	m.cursor++
-	if m.cursor >= m.numberOfNodes() {
-		m.cursor = m.numberOfNodes() - 1
-	}
-	m.onSelectionChange(m.nodesByCursor[m.cursor])
-}
-
-func (m *Model) renderTree(t *table.Table, remainingNodes []*Node, path []string, indent int, count *int) {
+func (m *Model) renderTree(rows *[]table.Row, remainingNodes []*Node, path []string, indent int, count *int) {
 	const treeNodePrefix string = " └──"
 
 	for _, node := range remainingNodes {
 		// If we aren't at the root, we add the arrow shape to the string
 		shape := ""
 		if indent > 0 {
-			shape = strings.Repeat(" ", (indent-1)) + m.Styles.Shapes.Render(treeNodePrefix) + " "
+			shape = strings.Repeat(" ", (indent - 1))
 		}
 
 		// Generate the correct index for the node
 		idx := *count
 		*count++
 
-		// Format the string with fixed width for the value and description fields
-		valueStr := ""
-		unselectedStyle := lipgloss.NewStyle().Inherit(m.Styles.Unselected)
-		if node.Unselected.Foreground != 0 {
-			unselectedStyle = unselectedStyle.Foreground(node.Unselected.Foreground)
+		s := lipgloss.NewStyle()
+		if m.cursor != idx {
+			s = s.Foreground(node.Color)
 		}
 
-		// If we are at the cursor, we add the selected style to the string
-		if m.cursor == idx {
-			s := lipgloss.NewStyle().Inherit(m.Styles.Selected)
-			if node.Selected.Background != 0 {
-				s = s.Foreground(node.Selected.Foreground).Background(node.Selected.Background)
-			}
-			valueStr = s.Render(node.Key)
-		} else {
-			valueStr = unselectedStyle.Render(node.Key)
+		cols := []table.Cell{{Value: shape + node.Key, Style: s}}
+		for _, v := range m.table.Columns()[1:] {
+			cols = append(cols, table.Cell{Value: node.Details[v.Title], Style: s})
 		}
 
-		cols := []string{fmt.Sprintf("%s%s", shape, valueStr)}
-		for _, v := range m.headers[1:] {
-			cols = append(cols, unselectedStyle.Render(node.Details[v]))
-		}
-		t.Row(cols...)
+		*rows = append(*rows, cols)
 		m.nodesByCursor[idx] = node
 
 		// Used to be able to trace back the path on the tree
@@ -305,7 +251,7 @@ func (m *Model) renderTree(t *table.Table, remainingNodes []*Node, path []string
 		node.Path = append(node.Path, node.Key)
 
 		if node.Children != nil {
-			m.renderTree(t, node.Children, node.Path, indent+1, count)
+			m.renderTree(rows, node.Children, node.Path, indent+2, count)
 		}
 	}
 }

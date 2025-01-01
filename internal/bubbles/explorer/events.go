@@ -76,11 +76,11 @@ func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane
 
 	if v.Unstructured.GetAnnotations()["crossplane.io/paused"] == "true" {
 		n.Key += " (paused)"
-		n.Unselected = tree.ColorConfig{Foreground: lipgloss.ANSIColor(ansi.Yellow)}
+		n.Color = lipgloss.ANSIColor(ansi.Yellow)
 	}
 
 	if synced.Status == k8sv1.ConditionFalse || ready.Status == k8sv1.ConditionFalse {
-		n.Unselected = tree.ColorConfig{Foreground: lipgloss.ANSIColor(ansi.Red)}
+		n.Color = lipgloss.ANSIColor(ansi.Red)
 	}
 
 	n.Details = map[string]string{

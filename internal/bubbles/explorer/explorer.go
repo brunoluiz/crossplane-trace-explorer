@@ -92,7 +92,7 @@ func (m Model) View() string {
 		return m.viewer.View()
 	case PaneTree:
 		return lipgloss.JoinVertical(
-			lipgloss.Top,
+			lipgloss.Left,
 			lipgloss.NewStyle().Height(m.height-m.statusbar.GetHeight()).Render(m.tree.View()),
 			m.statusbar.View(),
 		)
