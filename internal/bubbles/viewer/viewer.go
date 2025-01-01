@@ -79,6 +79,13 @@ func New(opts ...WithOpt) Model {
 
 func (m Model) Init() tea.Cmd { return nil }
 
+func (m Model) GetWidth() int {
+	w := m.viewport.Width
+	borderLeftW := m.viewportStyle.GetBorderLeftSize()
+	borderRightW := m.viewportStyle.GetBorderRightSize()
+	return w - borderLeftW - borderRightW
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var (
 		cmd  tea.Cmd

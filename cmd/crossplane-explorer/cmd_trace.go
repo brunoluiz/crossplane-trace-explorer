@@ -61,7 +61,7 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 					statusbar.New(),
 				),
 				tea.WithAltScreen(),
-				tea.WithMouseCellMotion(),
+				// tea.WithMouseCellMotion(),
 				tea.WithContext(egCtx),
 			)
 
