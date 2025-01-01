@@ -9,10 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 
-	// "github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 )
 
 type KeyMap struct {
@@ -70,41 +68,11 @@ type Model struct {
 	nodes         []*Node
 	nodesByCursor map[int]*Node
 	cursor        int
-	headers       []string
 
 	showHelp bool
 }
 
-const (
-	HeaderKeyObject     = "OBJECT"
-	HeaderKeyGroup      = "GROUP"
-	HeaderKeySynced     = "SYNCED"
-	HeaderKeySyncedLast = "SYNCED LAST"
-	HeaderKeyReady      = "READY"
-	HeaderKeyReadyLast  = "READY LAST"
-	HeaderKeyMessage    = "MESSAGE"
-)
-
-func New(headers []string) *Model {
-	t := table.New(table.WithColumns([]table.Column{
-		{Title: HeaderKeyObject, Width: 60},
-		{Title: HeaderKeyGroup, Width: 30},
-		{Title: HeaderKeySynced, Width: 10},
-		{Title: HeaderKeySyncedLast, Width: 25},
-		{Title: HeaderKeyReady, Width: 10},
-		{Title: HeaderKeyReadyLast, Width: 25},
-		{Title: HeaderKeyMessage, Width: 50},
-	}),
-		table.WithFocused(true),
-		table.WithStyles(func() table.Styles {
-			s := table.DefaultStyles()
-			s.Selected = lipgloss.NewStyle().
-				Foreground(lipgloss.ANSIColor(ansi.Black)).
-				Background(lipgloss.ANSIColor(ansi.White))
-			return s
-		}()),
-	)
-
+func New(t table.Model) *Model {
 	return &Model{
 		table: t,
 		KeyMap: KeyMap{
@@ -162,7 +130,6 @@ func New(headers []string) *Model {
 		width:         0,
 		height:        0,
 		nodesByCursor: map[int]*Node{},
-		headers:       headers,
 
 		showHelp: true,
 		Help:     help.New(),

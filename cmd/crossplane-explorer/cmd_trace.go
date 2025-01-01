@@ -8,10 +8,13 @@ import (
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/statusbar"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/viewer"
+	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/table"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/tree"
 	"github.com/brunoluiz/crossplane-explorer/internal/tasker"
 	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/urfave/cli/v3"
 	"golang.org/x/sync/errgroup"
 )
@@ -35,15 +38,25 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 			eg, egCtx := errgroup.WithContext(ctx)
 			app := tea.NewProgram(
 				explorer.New(
-					tree.New([]string{
-						explorer.HeaderKeyObject,
-						explorer.HeaderKeyGroup,
-						explorer.HeaderKeySynced,
-						explorer.HeaderKeySyncedLast,
-						explorer.HeaderKeyReady,
-						explorer.HeaderKeyReadyLast,
-						explorer.HeaderKeyMessage,
-					}),
+					tree.New(table.New(
+						table.WithColumns([]table.Column{
+							{Title: explorer.HeaderKeyObject, Width: 60},
+							{Title: explorer.HeaderKeyGroup, Width: 30},
+							{Title: explorer.HeaderKeySynced, Width: 10},
+							{Title: explorer.HeaderKeySyncedLast, Width: 25},
+							{Title: explorer.HeaderKeyReady, Width: 10},
+							{Title: explorer.HeaderKeyReadyLast, Width: 25},
+							{Title: explorer.HeaderKeyMessage, Width: 50},
+						}),
+						table.WithFocused(true),
+						table.WithStyles(func() table.Styles {
+							s := table.DefaultStyles()
+							s.Selected = lipgloss.NewStyle().
+								Foreground(lipgloss.ANSIColor(ansi.Black)).
+								Background(lipgloss.ANSIColor(ansi.White))
+							return s
+						}()),
+					)),
 					viewer.New(),
 					statusbar.New(),
 				),
