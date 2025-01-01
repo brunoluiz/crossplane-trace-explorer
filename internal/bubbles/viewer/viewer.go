@@ -63,8 +63,8 @@ func New(opts ...WithOpt) Model {
 			Padding(0, 1, 0, 1).
 			Margin(1, 0, 0, 1),
 		viewportStyle: lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder(), true, true, true, true).
-			Margin(0, 1, 0, 1).
+			// Border(lipgloss.NormalBorder(), true, true, true, true).
+			Margin(1, 0, 0, 1).
 			Padding(0, 1, 0, 1),
 		footerStyle: lipgloss.NewStyle().
 			Padding(0, 1, 0, 1),
