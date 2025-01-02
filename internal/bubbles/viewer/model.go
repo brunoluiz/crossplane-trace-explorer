@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 )
 
 type Model struct {
@@ -14,11 +13,8 @@ type Model struct {
 	sideTitle string
 	content   string
 
-	cmdQuit        tea.Cmd
-	titleStyle     lipgloss.Style
-	sideTitleStyle lipgloss.Style
-	viewportStyle  lipgloss.Style
-	footerStyle    lipgloss.Style
+	cmdQuit tea.Cmd
+	styles  Styles
 
 	// You generally won't need this unless you're processing stuff with
 	// complicated ANSI escape sequences. Turn it on if you notice flickering.
@@ -50,24 +46,7 @@ func New(opts ...WithOpt) Model {
 	m := Model{
 		cmdQuit:                    nil,
 		useHighPerformanceRenderer: false,
-		titleStyle: lipgloss.NewStyle().
-			Bold(true).
-			Background(lipgloss.ANSIColor(ansi.BrightBlack)).
-			Foreground(lipgloss.ANSIColor(ansi.White)).
-			Padding(0, 1, 0, 1).
-			Margin(1, 0, 0, 1),
-		sideTitleStyle: lipgloss.NewStyle().
-			Bold(true).
-			Background(lipgloss.ANSIColor(ansi.Green)).
-			Foreground(lipgloss.ANSIColor(ansi.Black)).
-			Padding(0, 1, 0, 1).
-			Margin(1, 0, 0, 1),
-		viewportStyle: lipgloss.NewStyle().
-			// Border(lipgloss.NormalBorder(), true, true, true, true).
-			Margin(1, 0, 0, 1).
-			Padding(0, 1, 0, 1),
-		footerStyle: lipgloss.NewStyle().
-			Padding(0, 1, 0, 1),
+		styles:                     DefaultStyles(),
 	}
 
 	for _, opt := range opts {
@@ -81,8 +60,8 @@ func (m Model) Init() tea.Cmd { return nil }
 
 func (m Model) GetWidth() int {
 	w := m.viewport.Width
-	borderLeftW := m.viewportStyle.GetBorderLeftSize()
-	borderRightW := m.viewportStyle.GetBorderRightSize()
+	borderLeftW := m.styles.Viewport.GetBorderLeftSize()
+	borderRightW := m.styles.Viewport.GetBorderRightSize()
 	return w - borderLeftW - borderRightW
 }
 
@@ -110,14 +89,14 @@ func (m *Model) SetContent(msg ContentInput) {
 func (m Model) headerView() string {
 	return lipgloss.JoinHorizontal(
 		lipgloss.Left,
-		m.titleStyle.Render(m.title),
-		m.sideTitleStyle.Render(m.sideTitle),
+		m.styles.Title.Render(m.title),
+		m.styles.SideTitle.Render(m.sideTitle),
 	)
 }
 
 func (m Model) footerView() string {
 	return lipgloss.JoinHorizontal(
 		lipgloss.Right,
-		m.footerStyle.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100)),
+		m.styles.Footer.Render(fmt.Sprintf("%3.f%%", m.viewport.ScrollPercent()*100)),
 	)
 }

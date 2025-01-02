@@ -45,7 +45,7 @@ func (m *Model) onResize(msg tea.WindowSizeMsg) tea.Cmd {
 		// quickly, though asynchronously, which is why we wait for them
 		// here.
 		m.viewport = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-		m.viewport.Style = m.viewportStyle
+		m.viewport.Style = m.styles.Viewport
 		m.viewport.YPosition = headerHeight
 		m.viewport.HighPerformanceRendering = m.useHighPerformanceRenderer
 		m.viewport.SetContent(m.content)
