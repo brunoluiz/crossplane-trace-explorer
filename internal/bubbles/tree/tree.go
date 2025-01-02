@@ -220,13 +220,13 @@ func (m *Model) numberOfNodes() int {
 }
 
 func (m *Model) renderTree(rows *[]table.Row, remainingNodes []*Node, path []string, indent int, count *int) {
-	const treeNodePrefix string = " └──"
+	const treeNodePrefix string = " └─"
 
 	for _, node := range remainingNodes {
 		// If we aren't at the root, we add the arrow shape to the string
 		shape := ""
 		if indent > 0 {
-			shape = strings.Repeat(" ", (indent - 1))
+			shape = strings.Repeat(" ", (indent-1)) + treeNodePrefix + " "
 		}
 
 		// Generate the correct index for the node
@@ -251,7 +251,7 @@ func (m *Model) renderTree(rows *[]table.Row, remainingNodes []*Node, path []str
 		node.Path = append(node.Path, node.Key)
 
 		if node.Children != nil {
-			m.renderTree(rows, node.Children, node.Path, indent+2, count)
+			m.renderTree(rows, node.Children, node.Path, indent+1, count)
 		}
 	}
 }

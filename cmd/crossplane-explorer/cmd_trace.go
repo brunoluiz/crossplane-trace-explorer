@@ -42,11 +42,11 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 						table.WithColumns([]table.Column{
 							{Title: explorer.HeaderKeyObject, Width: 60},
 							{Title: explorer.HeaderKeyGroup, Width: 30},
-							{Title: explorer.HeaderKeySynced, Width: 10},
-							{Title: explorer.HeaderKeySyncedLast, Width: 25},
-							{Title: explorer.HeaderKeyReady, Width: 10},
-							{Title: explorer.HeaderKeyReadyLast, Width: 25},
-							{Title: explorer.HeaderKeyMessage, Width: 50},
+							{Title: explorer.HeaderKeySynced, Width: 7},
+							{Title: explorer.HeaderKeySyncedLast, Width: 19},
+							{Title: explorer.HeaderKeyReady, Width: 7},
+							{Title: explorer.HeaderKeyReadyLast, Width: 19},
+							{Title: explorer.HeaderKeyMessage, Width: 68},
 						}),
 						table.WithFocused(true),
 						table.WithStyles(func() table.Styles {
