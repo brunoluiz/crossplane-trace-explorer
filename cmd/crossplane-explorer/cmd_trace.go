@@ -30,6 +30,7 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 		Aliases: []string{"t"},
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "cmd", Usage: "Which binary should it use to generate the JSON trace", Value: "crossplane beta trace -o json"},
+			&cli.StringFlag{Name: "namespace", Aliases: []string{"n", "ns"}, Usage: "Kubernetes namespace to be used"},
 			&cli.BoolFlag{Name: "stdin", Aliases: []string{"in"}, Usage: "Specify in case file is piped into stdin"},
 			&cli.BoolFlag{Name: "watch", Aliases: []string{"w"}, Usage: "Refresh trace every 10 seconds"},
 			&cli.DurationFlag{Name: "watch-interval", Aliases: []string{"wi"}, Usage: "Refresh interval for the watcher feature", Value: 5 * time.Second},
@@ -76,7 +77,11 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 					return nil
 				}
 
-				q := xplane.NewCLITraceQuerier(c.String("cmd"), c.Args().First())
+				q := xplane.NewCLITraceQuerier(
+					c.String("cmd"),
+					c.String("namespace"),
+					c.Args().First(),
+				)
 				cb := func() error {
 					app.Send(q.MustGetTrace())
 					return nil

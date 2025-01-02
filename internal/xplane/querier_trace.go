@@ -13,10 +13,13 @@ type CLITraceQuerier struct {
 	args []string
 }
 
-func NewCLITraceQuerier(cmd string, name string) *CLITraceQuerier {
+func NewCLITraceQuerier(cmd string, namespace string, name string) *CLITraceQuerier {
 	s := strings.Split(cmd, " ")
 	app := s[0]
 	args := s[1:]
+	if namespace != "" {
+		args = append(args, "--namespace", namespace)
+	}
 	args = append(args, name)
 
 	return &CLITraceQuerier{

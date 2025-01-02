@@ -194,7 +194,7 @@
                       "annotations": {
                         "crossplane.io/composition-resource-name": ""
                       },
-                      "name": "test-resource-child-2-1-bucket-hash"
+                      "name": "test-resource-child-2-2-bucket-hash"
                     },
                     "status": {
                       "conditions": [
