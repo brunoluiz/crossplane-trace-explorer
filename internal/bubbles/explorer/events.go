@@ -2,7 +2,6 @@ package explorer
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/atotto/clipboard"
@@ -12,9 +11,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
-	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/samber/lo"
-	k8sv1 "k8s.io/api/core/v1"
 )
 
 func (m *Model) onLoad(data *xplane.Resource) tea.Cmd {
@@ -66,30 +62,30 @@ func (m *Model) onKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane.Resource) {
+	name := fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
+	resStatus := xplane.GetResourceStatus(v, name)
 	group := v.Unstructured.GetObjectKind().GroupVersionKind().Group
-	ready := v.GetCondition(v1.TypeReady)
-	synced := v.GetCondition(v1.TypeSynced)
 
-	n.Key = fmt.Sprintf("%s/%s", v.Unstructured.GetKind(), v.Unstructured.GetName())
+	n.Key = name
 	n.Value = fmt.Sprintf("%s.%s/%s", v.Unstructured.GetKind(), group, v.Unstructured.GetName())
 	n.Children = make([]*tree.Node, len(v.Children))
+
+	if resStatus.Status != "" {
+		n.Color = lipgloss.ANSIColor(ansi.Red)
+	}
 
 	if v.Unstructured.GetAnnotations()["crossplane.io/paused"] == "true" {
 		n.Key += " (paused)"
 		n.Color = lipgloss.ANSIColor(ansi.Yellow)
 	}
 
-	if synced.Status == k8sv1.ConditionFalse || ready.Status == k8sv1.ConditionFalse {
-		n.Color = lipgloss.ANSIColor(ansi.Red)
-	}
-
 	n.Details = map[string]string{
 		HeaderKeyGroup:      group,
-		HeaderKeySynced:     string(synced.Status),
-		HeaderKeySyncedLast: synced.LastTransitionTime.Format(time.RFC822),
-		HeaderKeyReady:      string(ready.Status),
-		HeaderKeyReadyLast:  ready.LastTransitionTime.Format(time.RFC822),
-		HeaderKeyStatus:     lo.Elipse(strings.Join(v.GetUnhealthyStatus(), ", "), 96),
+		HeaderKeySynced:     resStatus.Synced,
+		HeaderKeySyncedLast: resStatus.SyncedLastTransition.Format(time.RFC822),
+		HeaderKeyReady:      resStatus.Ready,
+		HeaderKeyReadyLast:  resStatus.ReadyLastTransition.Format(time.RFC822),
+		HeaderKeyStatus:     resStatus.Status,
 	}
 
 	resByNode[n] = v
