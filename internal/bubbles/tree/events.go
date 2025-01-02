@@ -1,31 +1,24 @@
 package tree
 
 import (
-	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/table"
 	"github.com/charmbracelet/bubbles/key"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type EventResize struct {
-	Width  int
-	Height int
-}
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		cmd = m.onResize(msg)
+	case tea.KeyMsg:
+		cmd = m.onKey(msg)
+	}
 
-type EventUpdateNodes struct {
-	Nodes []*Node
-}
+	var tableCmd tea.Cmd
+	m.table, tableCmd = m.table.Update(msg)
 
-func (m *Model) onNodesUpdate(msg EventUpdateNodes) tea.Cmd {
-	m.nodes = msg.Nodes
-
-	count := 0 // This is used to keep track of the index of the node we are on (important because we are using a recursive function)
-	rows := []table.Row{}
-	m.renderTree(&rows, m.nodes, []string{}, 0, &count)
-	m.table.SetRows(rows)
-	m.table.Focus()
-
-	return nil
+	return m, tea.Batch(cmd, tableCmd)
 }
 
 func (m *Model) onResize(msg tea.WindowSizeMsg) tea.Cmd {

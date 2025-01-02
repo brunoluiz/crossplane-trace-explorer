@@ -27,9 +27,9 @@ const (
 )
 
 type Model struct {
-	tree      *tree.Model
-	statusbar *statusbar.Model
-	viewer    *viewer.Model
+	tree      tree.Model
+	statusbar *statusbar.Model // requires pointer here
+	viewer    viewer.Model
 	width     int
 	height    int
 
@@ -38,19 +38,13 @@ type Model struct {
 }
 
 func New(
-	treeModel *tree.Model,
-	viewerModel *viewer.Model,
-	statusbarModel *statusbar.Model,
+	treeModel tree.Model,
+	viewerModel viewer.Model,
+	statusbarModel statusbar.Model,
 ) *Model {
-	treeModel.OnSelectionChange = func(n *tree.Node) {
-		statusbarModel.Update(statusbar.EventUpdatePath{
-			Path: n.Path,
-		})
-	}
-
-	return &Model{
+	m := &Model{
 		tree:      treeModel,
-		statusbar: statusbarModel,
+		statusbar: &statusbarModel,
 		viewer:    viewerModel,
 		width:     0,
 		height:    0,
@@ -58,41 +52,15 @@ func New(
 		pane:      PaneTree,
 		resByNode: map[*tree.Node]*xplane.Resource{},
 	}
+	m.tree.OnSelectionChange = func(n *tree.Node) {
+		m.statusbar.SetPath(n.Path)
+	}
+
+	return m
 }
 
 func (m Model) Init() tea.Cmd {
 	return nil
-}
-
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case *xplane.Resource:
-		cmd = m.onLoad(msg)
-	case tea.WindowSizeMsg:
-		m.onResize(msg)
-		return m, nil
-	case tea.KeyMsg:
-		cmd = m.onKey(msg)
-	}
-
-	switch m.pane {
-	case PaneSummary:
-		v, viewerCmd := m.viewer.Update(msg)
-
-		//nolint // trust the typecast
-		m.viewer = v.(*viewer.Model)
-		return m, tea.Batch(cmd, viewerCmd)
-	case PaneTree:
-		t, treeCmd := m.tree.Update(msg)
-		s, statusCmd := m.statusbar.Update(msg)
-
-		//nolint // trust the typecast
-		m.tree, m.statusbar = t.(*tree.Model), s.(*statusbar.Model)
-		return m, tea.Batch(cmd, statusCmd, treeCmd)
-	}
-
-	return m, nil
 }
 
 func (m Model) View() string {

@@ -55,8 +55,8 @@ func itoa(c ansi.BasicColor) string {
 	return fmt.Sprintf("%d", c)
 }
 
-func New(opts ...WithOpt) *Model {
-	cfg := &config{
+func New(opts ...WithOpt) Model {
+	cfg := config{
 		path:          []string{},
 		pathSeparator: "\ueab6 ",
 		primaryColor: statusbar.ColorConfig{
@@ -73,7 +73,7 @@ func New(opts ...WithOpt) *Model {
 		},
 	}
 	for _, opt := range opts {
-		opt(cfg)
+		opt(&cfg)
 	}
 
 	s := statusbar.New(
@@ -85,7 +85,7 @@ func New(opts ...WithOpt) *Model {
 	s.FirstColumn = "$"
 	s.SecondColumn = strings.Join(cfg.path, cfg.pathSeparator)
 
-	return &Model{
+	return Model{
 		path:           cfg.path,
 		pathSeparator:  cfg.pathSeparator,
 		rootSymbol:     cfg.rootSymbol,
@@ -99,24 +99,9 @@ func New(opts ...WithOpt) *Model {
 func (m Model) Init() tea.Cmd { return nil }
 func (m *Model) View() string { return m.statusbar.View() }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	m.statusbar.FourthColumn = ""
-	m.statusbar.FourthColumnColors = m.neutralColor
-
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		cmd = m.onResize(msg)
-	case EventUpdatePath:
-		cmd = m.onPathUpdate(msg)
-	case tea.KeyMsg:
-		cmd = m.onKey(msg)
-	}
-
-	var statusbarCmd tea.Cmd
-	m.statusbar, statusbarCmd = m.statusbar.Update(msg)
-
-	return m, tea.Batch(cmd, statusbarCmd)
-}
-
 func (m *Model) GetHeight() int { return statusbar.Height }
+
+func (m *Model) SetPath(path []string) {
+	m.path = path
+	m.statusbar.SecondColumn = strings.Join(m.path, m.pathSeparator)
+}

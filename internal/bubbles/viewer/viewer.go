@@ -86,33 +86,25 @@ func (m Model) GetWidth() int {
 	return w - borderLeftW - borderRightW
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
-	)
-
-	switch msg := msg.(type) {
-	case EventSetup:
-		cmds = append(cmds, m.onSetup(msg))
-	case tea.KeyMsg:
-		cmds = append(cmds, m.onKey(msg))
-	case tea.WindowSizeMsg:
-		cmds = append(cmds, m.onResize(msg))
-	}
-
-	// Handle keyboard and mouse events in the viewport
-	m.viewport, cmd = m.viewport.Update(msg)
-	cmds = append(cmds, cmd)
-
-	return m, tea.Batch(cmds...)
-}
-
 func (m Model) View() string {
 	if !m.ready {
 		return "\n  Initializing..."
 	}
 	return fmt.Sprintf("%s\n%s\n%s", m.headerView(), m.viewport.View(), m.footerView())
+}
+
+type ContentInput struct {
+	Title     string
+	SideTitle string
+	Content   string
+}
+
+func (m *Model) SetContent(msg ContentInput) {
+	m.title = msg.Title
+	m.sideTitle = msg.SideTitle
+	m.content = msg.Content
+	m.viewport.SetContent(msg.Content)
+	m.viewport.GotoTop()
 }
 
 func (m Model) headerView() string {

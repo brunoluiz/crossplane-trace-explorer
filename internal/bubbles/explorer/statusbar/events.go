@@ -1,19 +1,23 @@
 package statusbar
 
-import (
-	"strings"
+import tea "github.com/charmbracelet/bubbletea"
 
-	tea "github.com/charmbracelet/bubbletea"
-)
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	m.statusbar.FourthColumn = ""
+	m.statusbar.FourthColumnColors = m.neutralColor
 
-type EventUpdatePath struct {
-	Path []string
-}
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		cmd = m.onResize(msg)
+	case tea.KeyMsg:
+		cmd = m.onKey(msg)
+	}
 
-func (m *Model) onPathUpdate(msg EventUpdatePath) tea.Cmd {
-	m.path = msg.Path
-	m.statusbar.SecondColumn = strings.Join(m.path, m.pathSeparator)
-	return nil
+	var statusbarCmd tea.Cmd
+	m.statusbar, statusbarCmd = m.statusbar.Update(msg)
+
+	return m, tea.Batch(cmd, statusbarCmd)
 }
 
 func (m *Model) onResize(msg tea.WindowSizeMsg) tea.Cmd {

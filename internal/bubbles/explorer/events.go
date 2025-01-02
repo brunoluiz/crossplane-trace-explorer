@@ -13,14 +13,45 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case *xplane.Resource:
+		cmd = m.onLoad(msg)
+	case tea.WindowSizeMsg:
+		return m, m.onResize(msg)
+	case tea.KeyMsg:
+		cmd = m.onKey(msg)
+	}
+
+	switch m.pane {
+	case PaneSummary:
+		var viewerCmd tea.Cmd
+		m.viewer, viewerCmd = m.viewer.Update(msg)
+		return m, tea.Batch(cmd, viewerCmd)
+	case PaneTree:
+		var treeCmd, statusCmd tea.Cmd
+		m.tree, treeCmd = m.tree.Update(msg)
+		*m.statusbar, statusCmd = m.statusbar.Update(msg)
+
+		return m, tea.Batch(cmd, statusCmd, treeCmd)
+	}
+
+	return m, nil
+}
+
 func (m *Model) onLoad(data *xplane.Resource) tea.Cmd {
+	if data == nil {
+		return nil
+	}
+
 	nodes := []*tree.Node{
 		{Key: "root", Children: make([]*tree.Node, 1)},
 	}
 	resByNode := map[*tree.Node]*xplane.Resource{}
 	addNodes(data, nodes[0], resByNode)
 
-	m.tree.Update(tree.EventUpdateNodes{Nodes: nodes})
+	m.tree.SetNodes(nodes)
 	m.resByNode = resByNode
 
 	return nil
@@ -31,9 +62,9 @@ func (m *Model) onResize(msg tea.WindowSizeMsg) tea.Cmd {
 	m.height = msg.Height
 
 	top, right, _, left := lipgloss.NewStyle().Padding(1).GetPadding()
-	m.tree.Update(tea.WindowSizeMsg{Width: m.width - right - left, Height: m.height - top})
-	m.statusbar.Update(msg)
-	m.viewer.Update(msg)
+	m.tree, _ = m.tree.Update(tea.WindowSizeMsg{Width: m.width - right - left, Height: m.height - top})
+	*m.statusbar, _ = m.statusbar.Update(msg)
+	m.viewer, _ = m.viewer.Update(msg)
 
 	return nil
 }
@@ -47,8 +78,9 @@ func (m *Model) onKey(msg tea.KeyMsg) tea.Cmd {
 		clipboard.WriteAll(m.tree.Current().Value)
 	case "enter", "d":
 		v := m.resByNode[m.tree.Current()]
-
-		m.viewer.Update(viewer.EventSetup{Trace: v})
+		m.viewer.SetContent(viewer.ContentInput{
+			Trace: v,
+		})
 		m.pane = PaneSummary
 	case "q", "esc":
 		if m.pane == PaneTree {

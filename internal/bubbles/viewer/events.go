@@ -6,25 +6,30 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type EventSetup struct {
-	Title     string
-	SideTitle string
-	Content   string
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		cmds = append(cmds, m.onKey(msg))
+	case tea.WindowSizeMsg:
+		cmds = append(cmds, m.onResize(msg))
+	}
+
+	// Handle keyboard and mouse events in the viewport
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m *Model) onKey(msg tea.KeyMsg) tea.Cmd {
 	if k := msg.String(); k == "ctrl+c" || k == "q" || k == "esc" {
 		return m.cmdQuit
 	}
-	return nil
-}
-
-func (m *Model) onSetup(msg EventSetup) tea.Cmd {
-	m.title = msg.Title
-	m.sideTitle = msg.SideTitle
-	m.content = msg.Content
-	m.viewport.SetContent(m.content)
-	m.viewport.GotoTop()
 	return nil
 }
 

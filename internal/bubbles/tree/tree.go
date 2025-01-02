@@ -72,8 +72,8 @@ type Model struct {
 	showHelp bool
 }
 
-func New(t table.Model) *Model {
-	return &Model{
+func New(t table.Model) Model {
+	return Model{
 		table: t,
 		KeyMap: KeyMap{
 			Bottom: key.NewBinding(
@@ -140,23 +140,6 @@ func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case EventUpdateNodes:
-		cmd = m.onNodesUpdate(msg)
-	case tea.WindowSizeMsg:
-		cmd = m.onResize(msg)
-	case tea.KeyMsg:
-		cmd = m.onKey(msg)
-	}
-
-	var tableCmd tea.Cmd
-	m.table, tableCmd = m.table.Update(msg)
-
-	return m, tea.Batch(cmd, tableCmd)
-}
-
 func (m Model) View() string {
 	availableHeight := m.height
 
@@ -167,6 +150,18 @@ func (m Model) View() string {
 	}
 	m.table.SetHeight(availableHeight)
 	return lipgloss.JoinVertical(lipgloss.Left, m.table.View(), help)
+}
+
+func (m *Model) SetNodes(nodes []*Node) tea.Cmd {
+	m.nodes = nodes
+
+	count := 0 // This is used to keep track of the index of the node we are on (important because we are using a recursive function)
+	rows := []table.Row{}
+	m.renderTree(&rows, m.nodes, []string{}, 0, &count)
+	m.table.SetRows(rows)
+	m.table.Focus()
+
+	return nil
 }
 
 func (m Model) ShortHelp() []key.Binding {
