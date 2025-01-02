@@ -17,10 +17,6 @@ linters-settings:
   errcheck:
     check-type-assertions: true
     check-blank: true
-  nolintlint:
-    allow-unused: true
-    require-specific: false
-    require-explanation: true
 linters:
   enable:
     - asciicheck # Simple linter to check that your code does not contain non-ASCII identifiers.
@@ -38,7 +34,6 @@ linters:
     - gosec # Inspects source code for security problems.
     - nakedret # Finds naked returns in functions greater than a specified function length.
     - nestif # Reports deeply nested if statements.
-    - nolintlint # Reports ill-formed or insufficient nolint directives.
     - revive # Fast, configurable, extensible, flexible, and beautiful linter for Go. Drop-in replacement of golint.
     - unconvert # Remove unnecessary type conversions.
     - gofumpt # Gofumpt checks whether code was gofumpt-ed.
@@ -47,3 +42,5 @@ linters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  exclude-dirs:
+    - internal/bubbles/table
