@@ -89,7 +89,7 @@ func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane
 		HeaderKeySyncedLast: synced.LastTransitionTime.Format(time.RFC822),
 		HeaderKeyReady:      string(ready.Status),
 		HeaderKeyReadyLast:  ready.LastTransitionTime.Format(time.RFC822),
-		HeaderKeyMessage:    lo.Elipse(strings.Join(v.GetUnhealthyStatus(), ", "), 96),
+		HeaderKeyStatus:     lo.Elipse(strings.Join(v.GetUnhealthyStatus(), ", "), 96),
 	}
 
 	resByNode[n] = v

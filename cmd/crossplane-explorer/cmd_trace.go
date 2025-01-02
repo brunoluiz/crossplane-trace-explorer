@@ -47,7 +47,7 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 							{Title: explorer.HeaderKeySyncedLast, Width: 19},
 							{Title: explorer.HeaderKeyReady, Width: 7},
 							{Title: explorer.HeaderKeyReadyLast, Width: 19},
-							{Title: explorer.HeaderKeyMessage, Width: 68},
+							{Title: explorer.HeaderKeyStatus, Width: 68},
 						}),
 						table.WithFocused(true),
 						table.WithStyles(func() table.Styles {

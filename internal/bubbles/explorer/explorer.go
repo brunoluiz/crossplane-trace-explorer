@@ -16,7 +16,7 @@ const (
 	HeaderKeySyncedLast = "SYNCED LAST"
 	HeaderKeyReady      = "READY"
 	HeaderKeyReadyLast  = "READY LAST"
-	HeaderKeyMessage    = "MESSAGE"
+	HeaderKeyStatus     = "STATUS"
 )
 
 type Pane string
