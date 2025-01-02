@@ -24,6 +24,7 @@ func (m *Model) onSetup(msg EventSetup) tea.Cmd {
 	m.sideTitle = msg.SideTitle
 	m.content = msg.Content
 	m.viewport.SetContent(m.content)
+	m.viewport.GotoTop()
 	return nil
 }
 

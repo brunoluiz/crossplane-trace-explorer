@@ -76,14 +76,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = m.onKey(msg)
 	}
 
-	t, treeCmd := m.tree.Update(msg)
-	s, statusCmd := m.statusbar.Update(msg)
-	v, viewerCmd := m.viewer.Update(msg)
+	switch m.pane {
+	case PaneSummary:
+		v, viewerCmd := m.viewer.Update(msg)
 
-	//nolint // trust the typecast
-	m.tree, m.statusbar, m.viewer = t.(*tree.Model), s.(*statusbar.Model), v.(*viewer.Model)
+		//nolint // trust the typecast
+		m.viewer = v.(*viewer.Model)
+		return m, tea.Batch(cmd, viewerCmd)
+	case PaneTree:
+		t, treeCmd := m.tree.Update(msg)
+		s, statusCmd := m.statusbar.Update(msg)
 
-	return m, tea.Batch(cmd, treeCmd, statusCmd, viewerCmd)
+		//nolint // trust the typecast
+		m.tree, m.statusbar = t.(*tree.Model), s.(*statusbar.Model)
+		return m, tea.Batch(cmd, statusCmd, treeCmd)
+	}
+
+	return m, nil
 }
 
 func (m Model) View() string {
