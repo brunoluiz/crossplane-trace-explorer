@@ -72,7 +72,12 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 
 			eg.Go(func() error {
 				if c.Bool("stdin") {
-					app.Send(xplane.NewReaderTraceQuerier(os.Stdin).MustGetTrace())
+					t, err := xplane.NewReaderTraceQuerier(os.Stdin).GetTrace()
+					if err != nil {
+						return err
+					}
+
+					app.Send(t)
 					return nil
 				}
 
@@ -82,7 +87,12 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 					c.Args().First(),
 				)
 				cb := func() error {
-					app.Send(q.MustGetTrace())
+					t, err := q.GetTrace()
+					if err != nil {
+						return err
+					}
+
+					app.Send(t)
 					return nil
 				}
 

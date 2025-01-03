@@ -10,13 +10,14 @@ import (
 	pkgv1 "github.com/crossplane/crossplane/apis/pkg/v1"
 	gcrname "github.com/google/go-containerregistry/pkg/name"
 	corev1 "k8s.io/api/core/v1"
+	errv1 "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // Resource resource trace model, extracted from crossplane CLI codebase
 type Resource struct {
 	Unstructured unstructured.Unstructured `json:"object"`
-	Error        error                     `json:"error,omitempty"`
+	Error        *errv1.StatusError        `json:"error,omitempty"`
 	Children     []*Resource               `json:"children,omitempty"`
 }
 
