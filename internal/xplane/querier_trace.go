@@ -38,14 +38,6 @@ func (q *CLITraceQuerier) GetTrace() (*Resource, error) {
 	return Parse(bytes.NewReader(stdout))
 }
 
-func (q *CLITraceQuerier) MustGetTrace() *Resource {
-	o, err := q.GetTrace()
-	if err != nil {
-		panic(err)
-	}
-	return o
-}
-
 // ReaderTraceQuerier defines a trace querier using piped files through stdin
 type ReaderTraceQuerier struct {
 	r io.Reader
@@ -57,8 +49,4 @@ func NewReaderTraceQuerier(r io.Reader) *ReaderTraceQuerier {
 
 func (q *ReaderTraceQuerier) GetTrace() (*Resource, error) {
 	return Parse(q.r)
-}
-
-func (q *ReaderTraceQuerier) MustGetTrace() *Resource {
-	return MustParse(q.r)
 }
