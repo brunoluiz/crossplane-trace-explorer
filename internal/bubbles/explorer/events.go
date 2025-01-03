@@ -57,6 +57,12 @@ func (m *Model) onLoad(data *xplane.Resource) tea.Cmd {
 	m.tree.SetNodes(nodes)
 	m.resByNode = resByNode
 
+	if m.watch {
+		return tea.Tick(m.watchInterval, func(_ time.Time) tea.Msg {
+			return m.getTrace()()
+		})
+	}
+
 	return nil
 }
 

@@ -2,6 +2,8 @@ package explorer
 
 import (
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/statusbar"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/viewer"
@@ -33,12 +35,15 @@ type Tracer interface {
 }
 
 type Model struct {
-	tree      tree.Model
-	statusbar *statusbar.Model // requires pointer here
-	viewer    viewer.Model
-	tracer    Tracer
-	width     int
-	height    int
+	tree          tree.Model
+	statusbar     *statusbar.Model // requires pointer here
+	viewer        viewer.Model
+	tracer        Tracer
+	width         int
+	height        int
+	watch         bool
+	watchInterval time.Duration
+	logger        *slog.Logger
 
 	pane      Pane
 	err       error
@@ -47,30 +52,45 @@ type Model struct {
 
 type WithOpt func(*Model)
 
-func WithWatcher(enabled bool) func(m *Model) {
+func WithWatch(enabled bool) func(*Model) {
 	return func(m *Model) {
+		m.watch = enabled
+	}
+}
+
+func WithWatchInterval(t time.Duration) func(*Model) {
+	return func(m *Model) {
+		m.watchInterval = t
 	}
 }
 
 func New(
+	logger *slog.Logger,
 	treeModel tree.Model,
 	viewerModel viewer.Model,
 	statusbarModel statusbar.Model,
 	tracer Tracer,
+	opts ...WithOpt,
 ) *Model {
 	m := &Model{
-		tree:      treeModel,
-		statusbar: &statusbarModel,
-		viewer:    viewerModel,
-		tracer:    tracer,
-		width:     0,
-		height:    0,
+		logger:        logger,
+		tree:          treeModel,
+		statusbar:     &statusbarModel,
+		viewer:        viewerModel,
+		tracer:        tracer,
+		width:         0,
+		height:        0,
+		watchInterval: 10 * time.Second,
 
 		pane:      PaneTree,
 		resByNode: map[*tree.Node]*xplane.Resource{},
 	}
 	m.tree.OnSelectionChange = func(n *tree.Node) {
 		m.statusbar.SetPath(n.Path)
+	}
+
+	for _, opt := range opts {
+		opt(m)
 	}
 
 	return m

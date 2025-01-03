@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"time"
 
@@ -10,13 +11,11 @@ import (
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/explorer/viewer"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/table"
 	"github.com/brunoluiz/crossplane-explorer/internal/bubbles/tree"
-	"github.com/brunoluiz/crossplane-explorer/internal/tasker"
 	"github.com/brunoluiz/crossplane-explorer/internal/xplane"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/urfave/cli/v3"
-	"golang.org/x/sync/errgroup"
 )
 
 func cmdTrace() *cli.Command {
@@ -29,6 +28,7 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 		Name:    "trace",
 		Aliases: []string{"t"},
 		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "log", Aliases: []string{"l"}, Usage: "Log destination", Value: "crossplane-explorer.trace.log"},
 			&cli.StringFlag{Name: "cmd", Usage: "Which binary should it use to generate the JSON trace", Value: "crossplane beta trace -o json"},
 			&cli.StringFlag{Name: "namespace", Aliases: []string{"n", "ns"}, Usage: "Kubernetes namespace to be used"},
 			&cli.BoolFlag{Name: "stdin", Aliases: []string{"in"}, Usage: "Specify in case file is piped into stdin"},
@@ -36,11 +36,14 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 			&cli.DurationFlag{Name: "watch-interval", Aliases: []string{"wi"}, Usage: "Refresh interval for the watcher feature", Value: 5 * time.Second},
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
-			eg, egCtx := errgroup.WithContext(ctx)
-			t := getTracer(c)
+			f, err := os.Create(c.String("log"))
+			if err != nil {
+				return err
+			}
 
 			app := tea.NewProgram(
 				explorer.New(
+					slog.New(slog.NewTextHandler(f, &slog.HandlerOptions{})),
 					tree.New(table.New(
 						table.WithColumns([]table.Column{
 							{Title: explorer.HeaderKeyObject, Width: 60},
@@ -62,35 +65,16 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 					)),
 					viewer.New(),
 					statusbar.New(),
-					t,
+					getTracer(c),
+					explorer.WithWatch(c.Bool("watch")),
+					explorer.WithWatchInterval(c.Duration("watch-interval")),
 				),
 				tea.WithAltScreen(),
-				tea.WithContext(egCtx),
+				tea.WithContext(ctx),
 			)
 
-			eg.Go(func() error {
-				_, err := app.Run()
-				return err
-			})
-
-			eg.Go(func() error {
-				if !c.Bool("watch") {
-					return nil
-				}
-
-				cb := func() error {
-					res, err := t.GetTrace()
-					if err != nil {
-						return err
-					}
-
-					app.Send(res)
-					return nil
-				}
-
-				return tasker.Periodic(egCtx, c.Duration("watch-interval"), cb)
-			})
-			return eg.Wait()
+			_, err = app.Run()
+			return err
 		},
 	}
 }

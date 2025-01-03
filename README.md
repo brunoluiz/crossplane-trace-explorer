@@ -59,5 +59,5 @@ crossplane beta trace Bucket/test-resource-bucket-hash -o json | crossplane-expl
 - Re-do the `addNodes` feature
 - Allow short and wide table format
 - Understand why first render of statusbar is not rendering selected path without hack
-- Re-do components similar to how they are done in `bubbles` (setters instead of event handlers; return Model instead of tea.Model; no usage of pointers)
 - Dynamic width for the tree table
+- Fix colouring flipping when highlighted
