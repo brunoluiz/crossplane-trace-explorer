@@ -102,7 +102,7 @@ func addNodes(v *xplane.Resource, n *tree.Node, resByNode map[*tree.Node]*xplane
 	n.Value = fmt.Sprintf("%s.%s/%s", v.Unstructured.GetKind(), group, v.Unstructured.GetName())
 	n.Children = make([]*tree.Node, len(v.Children))
 
-	if resStatus.Status != "" {
+	if !resStatus.Ok {
 		n.Color = lipgloss.ANSIColor(ansi.Red)
 	}
 

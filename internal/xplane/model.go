@@ -46,6 +46,7 @@ type ResourceStatus struct {
 	Synced               string
 	SyncedLastTransition time.Time
 	Status               string
+	Ok                   bool
 }
 
 // getResourceStatus returns a string that represents an entire row of status
@@ -97,6 +98,7 @@ func GetResourceStatus(r *Resource, name string) ResourceStatus {
 		Synced:               mapEmptyStatusToDash(syncedCond.Status),
 		SyncedLastTransition: syncedCond.LastTransitionTime.Time,
 		Status:               status,
+		Ok:                   (syncedCond.Status == corev1.ConditionTrue && readyCond.Status == corev1.ConditionTrue),
 	}
 }
 
@@ -110,6 +112,7 @@ type PkgResourceStatus struct {
 	HealthyLastTransition   time.Time
 	State                   string
 	Status                  string
+	Ok                      bool
 }
 
 func GetPkgResourceStatus(r *Resource, name string) PkgResourceStatus {
@@ -201,6 +204,7 @@ func GetPkgResourceStatus(r *Resource, name string) PkgResourceStatus {
 		HealthyLastTransition:   healthyCond.LastTransitionTime.Time,
 		State:                   mapEmptyStatusToDash(corev1.ConditionStatus(state)),
 		Status:                  status,
+		Ok:                      (installedCond.Status == corev1.ConditionTrue && healthyCond.Status == corev1.ConditionTrue),
 	}
 }
 
