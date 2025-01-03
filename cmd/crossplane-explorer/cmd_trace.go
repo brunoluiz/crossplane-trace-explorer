@@ -37,6 +37,8 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 		},
 		Action: func(ctx context.Context, c *cli.Command) error {
 			eg, egCtx := errgroup.WithContext(ctx)
+			t := getTracer(c)
+
 			app := tea.NewProgram(
 				explorer.New(
 					tree.New(table.New(
@@ -60,6 +62,7 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 					)),
 					viewer.New(),
 					statusbar.New(),
+					t,
 				),
 				tea.WithAltScreen(),
 				tea.WithContext(egCtx),
@@ -71,33 +74,18 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 			})
 
 			eg.Go(func() error {
-				if c.Bool("stdin") {
-					t, err := xplane.NewReaderTraceQuerier(os.Stdin).GetTrace()
-					if err != nil {
-						return err
-					}
-
-					app.Send(t)
-					return nil
-				}
-
-				q := xplane.NewCLITraceQuerier(
-					c.String("cmd"),
-					c.String("namespace"),
-					c.Args().First(),
-				)
-				cb := func() error {
-					t, err := q.GetTrace()
-					if err != nil {
-						return err
-					}
-
-					app.Send(t)
-					return nil
-				}
-
 				if !c.Bool("watch") {
-					return cb()
+					return nil
+				}
+
+				cb := func() error {
+					res, err := t.GetTrace()
+					if err != nil {
+						return err
+					}
+
+					app.Send(res)
+					return nil
 				}
 
 				return tasker.Periodic(egCtx, c.Duration("watch-interval"), cb)
@@ -105,4 +93,16 @@ Live mode is only available for (1) through the use of --watch / --watch-interva
 			return eg.Wait()
 		},
 	}
+}
+
+func getTracer(c *cli.Command) explorer.Tracer {
+	if c.Bool("stdin") {
+		return xplane.NewReaderTraceQuerier(os.Stdin)
+	}
+
+	return xplane.NewCLITraceQuerier(
+		c.String("cmd"),
+		c.String("namespace"),
+		c.Args().First(),
+	)
 }

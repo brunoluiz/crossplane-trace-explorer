@@ -16,6 +16,9 @@ import (
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case error:
+		m.err = msg
+		return m, nil
 	case *xplane.Resource:
 		cmd = m.onLoad(msg)
 	case tea.WindowSizeMsg:
